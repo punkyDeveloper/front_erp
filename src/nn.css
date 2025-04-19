@@ -1,0 +1,10 @@
+*{
+    margin: 0%;
+    padding: 0%;
+}
+
+.login {
+    width: 350px; /* Ajusta el ancho deseado */
+    max-width: 100%; /* Opcional, para mantener responsividad */
+}
+  

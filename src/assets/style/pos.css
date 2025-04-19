@@ -1,0 +1,60 @@
+/* Fondo general */
+body {
+    background-color: #f8f9fa;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Estilo de los Cards */
+.card {
+    border-radius: 10px;
+    border: none;
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: scale(1.02);
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* Estilo de los títulos y textos */
+.card-title {
+    color: #333;
+    font-weight: bold;
+}
+
+.card-text {
+    color: #555;
+    line-height: 1.6;
+}
+
+/* Badges personalizados */
+.badge {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 8px;
+}
+
+/* Botones */
+.btn-outline-primary {
+    border-color: #007bff;
+    color: #007bff;
+}
+
+.btn-outline-primary:hover {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.btn[disabled] {
+    background-color: #ccc;
+    border-color: #ccc;
+    color: #fff;
+}
+
+/* Formulario */
+.form-control {
+    border-radius: 5px;
+}
