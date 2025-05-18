@@ -1,6 +1,6 @@
 "use client";
 
-import NavAdmin from "./navPos";
+import NavAdmin from "../assets/nav/navPos";
 import VisualAgregarPorductos from "./agregarProductos";
 
 import { useEffect, useState } from 'react';

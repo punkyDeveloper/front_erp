@@ -1,20 +1,17 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Nav from '../assets/nav/nav';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Container, Button, Modal, Form, Table } from 'react-bootstrap';
 
 const CrearPermisos = () => {
-  // Estado para gestionar los permisos
   const [mostrarModal, setMostrarModal] = useState(false);
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [accionesSeleccionadas, setAccionesSeleccionadas] = useState([]);
   const [permisos, setPermisos] = useState([]);
 
-  // Acciones disponibles
-  const accionesDisponibles = ['ver', 'crear', 'editar', 'eliminar'];
+  const accionesDisponibles = ['Ver', 'Crear', 'Editar', 'Eliminar'];
 
-  // Funciones para abrir y cerrar el modal
   const abrirModal = () => {
     setNombre('');
     setDescripcion('');
@@ -26,52 +23,84 @@ const CrearPermisos = () => {
     setMostrarModal(false);
   };
 
-  // Función para seleccionar una acción
   const manejarAccionSeleccionada = (accion) => {
-    setAccionesSeleccionadas([accion]);  // Solo se puede seleccionar una acción
+    setAccionesSeleccionadas([accion]);
   };
 
-  // Función para guardar el nuevo permiso
-  const guardarPermiso = () => {
+  const fetchPermisos = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/v1/permisos');
+      if (!response.ok) {
+        throw new Error('Error al obtener permisos');
+      }
+      const data = await response.json();
+      setPermisos(data);
+    } catch (error) {
+      console.error('Error al obtener permisos:', error.message);
+    }
+  };
+
+  const guardarPermiso = async () => {
+    if (!nombre || !descripcion || accionesSeleccionadas.length === 0) {
+      alert('Completa todos los campos antes de guardar.');
+      return;
+    }
+
     const nuevosPermisos = accionesSeleccionadas.map((accion) => ({
-      nombre: `${accion.charAt(0).toUpperCase() + accion.slice(1)} ${nombre}`,
-      id: `${accion}`,
+      nombre: `${accion} ${nombre}`,
       descripcion,
       accion,
     }));
 
-    setPermisos([...permisos, ...nuevosPermisos]);
-    cerrarModal();
+    try {
+      for (const permiso of nuevosPermisos) {
+        const response = await fetch('http://localhost:3001/v1/permisos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(permiso),
+        });
+
+        if (!response.ok) {
+          throw new Error('Error en el envío');
+        }
+      }
+
+      alert('Permiso creado exitosamente');
+      cerrarModal();
+      fetchPermisos(); 
+    } catch (error) {
+      console.error('Error:', error.message);
+      alert('Ocurrió un error');
+    }
   };
+
+  useEffect(() => {
+    fetchPermisos();
+  }, []);
 
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
-      {/* Sidebar */}
       <Nav />
-      {/* Contenido principal */}
       <div style={{ marginLeft: '10px', padding: '5px', width: '100%' }}>
         <Container className="mt-4">
-          {/* Cabecera */}
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h3>Gestión de Permisos</h3>
             <Button onClick={abrirModal}>+ Nuevo Permiso</Button>
           </div>
 
-          {/* Tabla de permisos */}
           <Table bordered hover>
             <thead>
               <tr>
                 <th>#</th>
                 <th>Nombre</th>
                 <th>Acción</th>
-                <th>ID</th>
                 <th>Descripción</th>
               </tr>
             </thead>
             <tbody>
               {permisos.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center">No hay permisos aún</td>
+                  <td colSpan={5} className="text-center">No hay permisos aún</td>
                 </tr>
               ) : (
                 permisos.map((permiso, index) => (
@@ -79,7 +108,6 @@ const CrearPermisos = () => {
                     <td>{index + 1}</td>
                     <td>{permiso.nombre}</td>
                     <td>{permiso.accion}</td>
-                    <td>{permiso.id}</td>
                     <td>{permiso.descripcion}</td>
                   </tr>
                 ))
@@ -87,14 +115,12 @@ const CrearPermisos = () => {
             </tbody>
           </Table>
 
-          {/* Modal para crear o editar permisos */}
           <Modal show={mostrarModal} onHide={cerrarModal}>
             <Modal.Header closeButton>
               <Modal.Title>Crear Permiso</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-              <Form>
-                {/* Nombre del permiso */}
+              <Form className="m-3">
                 <Form.Group className="mb-3">
                   <Form.Label>Nombre del Permiso</Form.Label>
                   <Form.Control
@@ -104,7 +130,6 @@ const CrearPermisos = () => {
                   />
                 </Form.Group>
 
-                {/* Descripción del permiso */}
                 <Form.Group className="mb-3">
                   <Form.Label>Descripción</Form.Label>
                   <Form.Control
@@ -115,21 +140,18 @@ const CrearPermisos = () => {
                   />
                 </Form.Group>
 
-                {/* Selección de acción (solo una acción) */}
                 <Form.Group className="mb-3">
                   <Form.Label>Acción</Form.Label>
-                    {accionesDisponibles.map((accion) => (
-                  <div>
-                      <Form.Check
-                        key={accion}
-                        type="checkbox"
-                        name="acciones"
-                        label={accion.charAt(0).toUpperCase() + accion.slice(1)}
-                        checked={accionesSeleccionadas.includes(accion)}
-                        onChange={() => manejarAccionSeleccionada(accion)}
-                      />
-                  </div>
-                    ))}
+                  {accionesDisponibles.map((accion) => (
+                    <Form.Check
+                      key={accion}
+                      type="radio"
+                      name="accionUnica"
+                      label={accion}
+                      checked={accionesSeleccionadas.includes(accion)}
+                      onChange={() => manejarAccionSeleccionada(accion)}
+                    />
+                  ))}
                 </Form.Group>
               </Form>
             </Modal.Body>

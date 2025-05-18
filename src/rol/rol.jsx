@@ -7,18 +7,21 @@ import Button from 'react-bootstrap/Button';
 export default function Board() {
   const [roles, setRoles] = useState([]);
 
+  const fetchRoles = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/v1/roles');
+      if (!response.ok) {
+        throw new Error('Error al obtener roles');
+      }
+      const data = await response.json();
+      setRoles(data);
+    } catch (error) {
+      console.error('Error al obtener roles:', error.message);
+    }
+  }
+
   useEffect(() => {
-    fetch("http://localhost:3001/v1/role", {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-      .then(response => response.json())
-      .then(data => {
-        setRoles(data);
-      })
-      .catch(error => console.error("Error al obtener roles:", error));
+    fetchRoles();
   }, []);
 
   return (

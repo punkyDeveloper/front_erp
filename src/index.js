@@ -28,9 +28,9 @@ root.render(
         <Route path="/Pos" element={<Pos />} />
         <Route path="/Time" element={<Time />} />
         <Route path="/configuracion" element={<Configuracion />} />
-        <Route path="/chef/cierre" element={<Chef />} />
-        <Route path="/rol" element={<Rol />} />
-        <Route path="/permisos" element={<Permisos />} />
+        <Route path="/cierre/chef" element={<Chef />} />
+        <Route path="/config/role/rol" element={<Rol />} />
+        <Route path="/config/role/permisos" element={<Permisos />} />
 
 
       </Routes>

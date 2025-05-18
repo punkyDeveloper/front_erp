@@ -49,17 +49,17 @@ const Nav = () => {
               <div>
 
               <CDBSidebarMenuItem
-                  icon="hamburger"
+                  fas icon="lock" 
                   onClick={toggleChef}
                   style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                 >
-                  chef
+                  Cierre
                   <i className={`m-3 fa ${isChefOpne ? 'fa-chevron-up' : 'fa-chevron-down'}`} />
                 </CDBSidebarMenuItem>
                 {isChefOpne && (
                   <div style={{ paddingLeft: '20px' }}>
-              <NavLink exact to="/chef/cierre" activeClassName="activeClicked">
-                <CDBSidebarMenuItem icon="hamburger">Cierre</CDBSidebarMenuItem>
+              <NavLink exact to="/cierre/chef" activeClassName="activeClicked">
+                <CDBSidebarMenuItem icon="hamburger">Chef</CDBSidebarMenuItem>
               </NavLink>
                   </div>
                 )}
@@ -111,10 +111,10 @@ const Nav = () => {
                     </CDBSidebarMenuItem>
                     {isRoleOpen && (
                       <div style={{ paddingLeft: '20px' }}>
-                        <NavLink exact to="/rol" activeClassName="activeClicked">
-                          <CDBSidebarMenuItem >listar</CDBSidebarMenuItem>
+                        <NavLink exact to="/config/role/rol" activeClassName="activeClicked">
+                          <CDBSidebarMenuItem >Rol</CDBSidebarMenuItem>
                         </NavLink>
-                        <NavLink exact to="/permisos" activeClassName="activeClicked">
+                        <NavLink exact to="/config/role/permisos" activeClassName="activeClicked">
                           <CDBSidebarMenuItem >Permisos</CDBSidebarMenuItem>
                         </NavLink>
                         </div>
