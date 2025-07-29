@@ -33,11 +33,11 @@ function App() {
       return;
     }
 
-    try {
-      const response = await fetch(`${import.meta.env.URL}/login`);
-    } catch (error) {
-      setError(error);
-    }
+    // try {
+    //   const response = await fetch(`${import.meta.env.URL}/login`);
+    // } catch (error) {
+    //   setError(error);
+    // }
   };
 
   return (

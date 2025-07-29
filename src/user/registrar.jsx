@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import Form from "react-bootstrap/Form";
@@ -60,9 +60,6 @@ function Example() {
     } catch (error) {
       console.error("Error al guardar el usuario:", error);
     }
-  };
-
-  useEffect(() => {
     const fetchRoles = async () => {
       try {
         const response = await fetch('http://localhost:3001/v1/role');
@@ -74,9 +71,10 @@ function Example() {
         setIsLoading(false);
       }
     };
-
+  
     fetchRoles();
-  }, []);
+  };
+
 
   return (
     <>
