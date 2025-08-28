@@ -47,7 +47,7 @@ function Example({ usuario }) {
           <Modal.Title>Actualizar Usuario</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <form className="m-3">
+          <form className="m-3" >
             <div className="form-group m-2">
               <label>Email address</label>
               <input
