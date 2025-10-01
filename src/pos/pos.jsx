@@ -1,4 +1,4 @@
-"use client";
+
 
 import NavAdmin from "../assets/nav/navPos";
 import VisualAgregarPorductos from "./agregarProductos";

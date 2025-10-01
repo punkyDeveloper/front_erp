@@ -33,11 +33,25 @@ function App() {
       return;
     }
 
-    // try {
-    //   const response = await fetch(`${import.meta.env.URL}/login`);
-    // } catch (error) {
-    //   setError(error);
-    // }
+try {
+  const response = await fetch(`http://localhost:3001/v1/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (response.ok) {
+    const data = await response.json();
+    console.log('Login exitoso:', data);
+    // Aquí puedes redirigir al usuario o guardar el token, etc.  
+    
+  }
+} catch (err) {
+  setError(err.message || "Ocurrió un error inesperado");
+}
+
   };
 
   return (
