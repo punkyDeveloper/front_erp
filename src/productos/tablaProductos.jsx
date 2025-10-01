@@ -35,6 +35,8 @@ function ProductosTable() {
           <th>Descripción</th>
           <th>Precio</th>
           <th>Stock</th>
+          <th>Venta</th>
+          <th>Alquiler</th>
           <th>Opciones</th>
         </tr>
       </thead>
@@ -46,7 +48,7 @@ function ProductosTable() {
               {producto.img ? (
                 <img 
                   src={producto.img} 
-                  alt={producto.nombre} 
+                  alt={producto.name} 
                   style={{ width: "60px", height: "60px", objectFit: "cover", borderRadius: "8px" }}
                 />
               ) : (
@@ -57,8 +59,20 @@ function ProductosTable() {
             <td>{producto.description}</td>
             <td>${producto.price}</td>
             <td>{producto.stock}</td>
-            <td>{producto.venta}</td>
-            <td>{producto.alquiler}</td>
+            <td>
+              {producto.venta ? (
+                <span style={{ color: "limegreen", fontWeight: "bold" }}>🟢 Activo</span>
+              ) : (
+                <span style={{ color: "red", fontWeight: "bold" }}>🔴 Inactivo</span>
+              )}
+            </td>
+            <td>
+              {producto.alquiler ? (
+                <span style={{ color: "limegreen", fontWeight: "bold" }}>🟢 Activo</span>
+              ) : (
+                <span style={{ color: "red", fontWeight: "bold" }}>🔴 Inactivo</span>
+              )}
+            </td>
             <td>
               {/* Aquí puedes poner botones de editar/eliminar */}
             </td>
