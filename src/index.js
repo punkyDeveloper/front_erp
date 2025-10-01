@@ -14,6 +14,7 @@ import Configuracion from "./confuracion/configuracion";
 import Chef from './chef/chef';
 import Rol from './rol/rol';
 import Permisos from './permisos/permisos';
+import Bienvenida from './bienvenida/bienvenida';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -22,7 +23,8 @@ root.render(
     <Router>
       <Routes>
         <Route path="/" element={<App />} />
-        <Route path="/Board" element={<Board />} />
+        <Route path="/bienvenida" element={<Bienvenida />} />
+        <Route path="/doard" element={<Board />} />
         <Route path="/Usuarios" element={<RegistrarUsuario />} />
         <Route path="/user" element={<User />} />
         <Route path="/Pos" element={<Pos />} />
