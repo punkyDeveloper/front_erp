@@ -44,7 +44,6 @@ function ResponsiveExample() {
           <th>Rol</th>
           <th>Estado</th>
           <th>Creado</th>
-          <th>Actualizado</th>
           
           <th>Opciones</th>
         </tr>

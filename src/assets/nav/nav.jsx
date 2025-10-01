@@ -40,8 +40,12 @@ const Nav = () => {
 
           <CDBSidebarContent className="sidebar-content">
             <CDBSidebarMenu>
-              <NavLink exact to="/Board" activeClassName="activeClicked">
-                <CDBSidebarMenuItem icon="columns">Dashboard</CDBSidebarMenuItem>
+              <NavLink exact to="/doard" activeClassName="activeClicked">
+                <CDBSidebarMenuItem  icon="columns">Dashboard</CDBSidebarMenuItem>
+                
+              </NavLink>              
+              <NavLink exact to="/productos" activeClassName="activeClicked">
+                <CDBSidebarMenuItem icon="shopping-bag">Productos</CDBSidebarMenuItem>
               </NavLink>
               <NavLink exact to="/Time" activeClassName="activeClicked">
                 <CDBSidebarMenuItem icon="table">Time</CDBSidebarMenuItem>
@@ -79,6 +83,9 @@ const Nav = () => {
                   <div style={{ paddingLeft: '20px' }}>
                     <NavLink exact to="/user" activeClassName="activeClicked">
                       <CDBSidebarMenuItem icon="user-circle">Profile</CDBSidebarMenuItem>
+                    </NavLink>
+                    <NavLink exact to="#" activeClassName="activeClicked">
+                      <CDBSidebarMenuItem icon="user-circle">Clientes</CDBSidebarMenuItem>
                     </NavLink>
                    
                   </div>

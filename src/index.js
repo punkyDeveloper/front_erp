@@ -14,6 +14,7 @@ import Configuracion from "./confuracion/configuracion";
 import Chef from './chef/chef';
 import Rol from './rol/rol';
 import Permisos from './permisos/permisos';
+import Productos from './productos/productos';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -31,6 +32,7 @@ root.render(
         <Route path="/cierre/chef" element={<Chef />} />
         <Route path="/config/role/rol" element={<Rol />} />
         <Route path="/config/role/permisos" element={<Permisos />} />
+        <Route path="/productos" element={<Productos />} />
 
 
       </Routes>
