@@ -41,7 +41,7 @@ function Example() {
     };
 
     fetchRoles();
-  }, []);
+  }, [    ]);
 
   const handleSave = async (e) => {
     e.preventDefault();
