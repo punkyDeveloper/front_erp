@@ -63,6 +63,7 @@ function Example() {
           name,
           rol_id: selectedRol,
           apellido,
+          compania: "68c46f3eb4a657d3e15fa56e",
         }),
       });
 

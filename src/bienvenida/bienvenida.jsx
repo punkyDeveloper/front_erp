@@ -9,7 +9,7 @@ export default function App() {
       {/* Contenido derecho */}
       <div style={{ overflowY: 'auto',  width: '100%' }}>
     <div style={overlayStyle}>
-      <h1 style={textStyle}>Bienvenido</h1>
+      <h1 style={textStyle}>Bienvenid@</h1>
     </div>
       </div>
     </div>
