@@ -4,6 +4,7 @@ import Modal from 'react-bootstrap/Modal';
 import { MDBIcon } from 'mdb-react-ui-kit';
 import Form from "react-bootstrap/Form";
 
+
 function Example({ usuario }) {
   const [show, setShow] = useState(false);
   const [formData, setFormData] = useState({
@@ -127,3 +128,14 @@ function Example({ usuario }) {
 }
 
 export default Example;
+
+
+// roles
+
+// <option value="mesera">Mesera</option>
+// <option value="master">Master</option>
+// <option value="coordinadora">Coordinadora</option>
+// <option value="cajera">Cajera</option>
+// <option value="chef">Chef</option>
+// <option value="chef_auxiliar">Chef Auxiliar</option>
+// <option value="Adminsitrador">Adminsitrador</option>
