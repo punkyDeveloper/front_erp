@@ -45,7 +45,7 @@ function ResponsiveExample() {
           <th>Estado</th>
           <th>Creado</th>
           
-          <th>Opciones</th>
+          <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
@@ -72,7 +72,7 @@ function ResponsiveExample() {
               </td>
             ))}
             <td>
-              <Update usuario={usuario} />
+              <Update userId={usuarios._id}   usuarios={usuarios} onUpdated={() => {}} />
             </td>
           </tr>
         ))}

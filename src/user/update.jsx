@@ -1,141 +1,216 @@
-import { useState, useEffect } from 'react';
-import Button from 'react-bootstrap/Button';
-import Modal from 'react-bootstrap/Modal';
-import { MDBIcon } from 'mdb-react-ui-kit';
+import { useEffect, useState } from "react";
+import Button from "react-bootstrap/Button";
+import Modal from "react-bootstrap/Modal";
 import Form from "react-bootstrap/Form";
 
-
-function Example({ usuario }) {
+function UpdateUser({ userId, onUpdated, usuarios }) {
   const [show, setShow] = useState(false);
-  const [formData, setFormData] = useState({
-    email: '',
-    user: '',
-    name: '',
-    rol: ''
-  });
-
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
+console.log(userId);
 
-  // 👉 Cada vez que se abre el modal, cargamos los datos del usuario
+  const [usuario, setUsuario] = useState(null);
+  const [roles, setRoles] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 🔹 Cargar usuario y roles al abrir modal
   useEffect(() => {
-    if (show && usuario) {
-      setFormData({
-        email: usuario.email || '',
-        user: usuario.user || '',
-        name: usuario.nombre || '',
-        rol: usuario.rol || ''
-      });
-    }
-  }, [show, usuario]);
+    if (!show || !userId) return;
 
-  // 👉 Para manejar cambios en los campos
+    const fetchData = async () => {
+      try {
+        const [userRes, rolesRes] = await Promise.all([
+          fetch(`http://localhost:3001/v1/usuario/${userId}`),
+          fetch("http://localhost:3001/v1/role"),
+        ]);
+
+        if (!userRes.ok || !rolesRes.ok)
+          throw new Error("Error al cargar datos");
+
+        const userData = await userRes.json();
+        const rolesData = await rolesRes.json();
+
+        setUsuario({
+          ...userData,
+          name: userData.nombre || "",
+          apellido: userData.apellido || "",
+          user: userData.user || "",
+          email: userData.email || "",
+          rol_id: userData.rol?._id || userData.rol || "",
+          compania: userData.compania || "",
+          estado: userData.estado ?? true,
+        });
+        setRoles(rolesData);
+      } catch (error) {
+        console.error("Error al cargar datos:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [show, userId]);
+
+  // 🔹 Manejar cambios de los inputs
   const handleChange = (e) => {
-    setFormData({ 
-      ...formData, 
-      [e.target.name]: e.target.value 
-    });
+    const { name, value, type, checked } = e.target;
+    setUsuario((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  // 🔹 Guardar actualización
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    if (!usuario) return;
+
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        name: usuario.name,
+        apellido: usuario.apellido,
+        email: usuario.email,
+        user: usuario.user,
+        rol_id: usuario.rol_id,
+        compania: usuario.compania,
+        estado: usuario.estado,
+        updatedAt: new Date().toISOString(), // ✅ fecha de actualización
+      };
+
+      const response = await fetch(
+        `http://localhost:3001/v1/usuario/${userId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Error al actualizar");
+
+      alert("Usuario actualizado correctamente");
+      handleClose();
+      if (onUpdated) onUpdated(); // refresca tabla u otro componente
+    } catch (error) {
+      console.error("Error al actualizar usuario:", error);
+      alert("No se pudo actualizar el usuario: " + error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <>
-      <Button variant="primary" onClick={handleShow}>
-        <MDBIcon fas icon="pencil-alt" /> Editar
+      <Button variant="warning" onClick={handleShow}>
+        Editar Usuario
       </Button>
 
-      <Modal show={show} onHide={handleClose} backdrop="static" keyboard={false}>
+      <Modal show={show} onHide={handleClose} backdrop="static">
         <Modal.Header closeButton>
           <Modal.Title>Actualizar Usuario</Modal.Title>
         </Modal.Header>
+
         <Modal.Body>
-          <form className="m-3" >
-            <div className="form-group m-2">
-              <label>Email address</label>
-              <input
-                type="email"
-                name="email"
-                className="form-control"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </div>
+          {isLoading ? (
+            <p>Cargando datos...</p>
+          ) : (
+            <form onSubmit={handleUpdate}>
+              <div className="form-group m-2">
+                <label>Correo</label>
+                <input
+                  type="email"
+                  className="form-control"
+                  name="email"
+                  value={usuario.email}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
 
-            <div className="form-group m-2">
-              <label>User</label>
-              <input
-                type="text"
-                name="user"
-                className="form-control"
-                value={formData.user}
-                onChange={handleChange}
-              />
-            </div>
+              <div className="form-group m-2">
+                <label>Usuario</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="user"
+                  value={usuario.user}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
 
-            <div className="form-group m-2">
-              <label>Name</label>
-              <input
-                type="text"
-                name="name"
-                className="form-control"
-                value={formData.name}
-                onChange={handleChange}
-              />
-            </div>
+              <div className="form-group m-2">
+                <label>Nombre</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="name"
+                  value={usuario.name}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
 
-            <div className="form-group m-2">
-              <label>Rol</label>
-              <Form.Select
-                name="rol"
-                value={formData.rol}
-                onChange={handleChange}
-              >
-                <option value="">Selecciona un rol</option>
-                <option value="mesera">Mesera</option>
-                <option value="master">Master</option>
-                <option value="coordinadora">Coordinadora</option>
-                <option value="cajera">Cajera</option>
-                <option value="chef">Chef</option>
-                <option value="chef_auxiliar">Chef Auxiliar</option>
-                <option value="Adminsitrador">Adminsitrador</option>
-              </Form.Select>
-            </div>
+              <div className="form-group m-2">
+                <label>Apellido</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="apellido"
+                  value={usuario.apellido}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
 
-            <div className='form-group m-2'>
-              <Button>
-                Cambiar contraseña
-              </Button>
-            </div>
-          </form>
+              <div className="form-group m-2">
+                <label>Rol</label>
+                <Form.Select
+                  name="rol_id"
+                  value={usuario.rol_id}
+                  onChange={handleChange}
+                >
+                  <option value="">Seleccione un rol</option>
+                  {roles.map((r) => (
+                    <option key={r._id} value={r._id}>
+                      {r.rol}
+                    </option>
+                  ))}
+                </Form.Select>
+              </div>
+
+              <div className="form-group m-2">
+                <label>Estado</label>
+                <Form.Check
+                  type="switch"
+                  name="estado"
+                  label={usuario.estado ? "Activo" : "Inactivo"}
+                  checked={usuario.estado}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="text-end mt-3">
+                <Button
+                  variant="secondary"
+                  className="me-2"
+                  onClick={handleClose}
+                >
+                  Cancelar
+                </Button>
+                <Button variant="primary" type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Guardando..." : "Actualizar"}
+                </Button>
+              </div>
+            </form>
+          )}
         </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleClose}>
-            Cerrar
-          </Button>
-          <Button
-            variant="primary"
-            onClick={() => {
-              console.log('Datos actualizados:', formData);
-              // Aquí podrías enviar `formData` al backend
-              handleClose();
-            }}
-          >
-            Confirmar
-          </Button>
-        </Modal.Footer>
       </Modal>
     </>
   );
 }
 
-export default Example;
-
-
-// roles
-
-// <option value="mesera">Mesera</option>
-// <option value="master">Master</option>
-// <option value="coordinadora">Coordinadora</option>
-// <option value="cajera">Cajera</option>
-// <option value="chef">Chef</option>
-// <option value="chef_auxiliar">Chef Auxiliar</option>
-// <option value="Adminsitrador">Adminsitrador</option>
+export default UpdateUser;
