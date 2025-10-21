@@ -84,9 +84,13 @@ function Example() {
 
   return (
     <>
+    <div className="d-flex justify-content-between align-items-center mb-3">
+      <h3>Gestión de Usuario</h3>
+
       <Button variant="primary" onClick={handleShow}>
         Register
       </Button>
+    </div>
 
       {/* Modal de Registro */}
       <Modal show={show} onHide={handleClose} backdrop="static" keyboard={false}>
