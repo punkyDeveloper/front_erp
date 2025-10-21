@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Table from 'react-bootstrap/Table';
 import Update from './update';
+import Delete from './delete';
 
 function ResponsiveExample() {
   const [usuarios, setUsuarios] = useState([]);
@@ -26,53 +27,80 @@ function ResponsiveExample() {
     };
   }, []);
 
+  // Función para formatear la fecha
+  const formatFecha = (fecha) => {
+    if (!fecha) return 'N/A';
+    const date = new Date(fecha);
+    return date.toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+  };
+
   return (
     <Table responsive striped bordered hover variant="dark">
       <thead>
         <tr>
           <th>#</th>
-          {/* {usuarios.length > 0 &&
-            Object.keys(usuarios[0]).map((key, index) => (
-              <th key={index}>
-                {key.charAt(0).toUpperCase() + key.slice(1)}
-              </th>
-            ))} */}
           <th>Nombre</th>
-          <th>apellido</th>
+          <th>Apellido</th>
           <th>Email</th>
           <th>User</th>
           <th>Rol</th>
           <th>Estado</th>
           <th>Creado</th>
-          
           <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
         {usuarios.map((usuario, index) => (
-          <tr key={index}>
+          <tr key={usuario._id || index}>
             <td>{index + 1}</td>
-            {Object.entries(usuario).map(([key, value], idx) => (
-              <td key={idx}>
-                {key === "estado" ? (
-                  value ? (
-                    <span style={{ color: "limegreen", fontWeight: "bold" }}>
-                      🟢 Activo
-                    </span>
-                  ) : (
-                    <span style={{ color: "red", fontWeight: "bold" }}>
-                      🔴 Inactivo
-                    </span>
-                  )
-                ) : typeof value === "object" && value !== null ? (
-                  JSON.stringify(value)
-                ) : (
-                  value
-                )}
-              </td>
-            ))}
+            <td>{usuario.nombre || 'N/A'}</td>
+            <td>{usuario.apellido || 'N/A'}</td>
+            <td>{usuario.email || 'N/A'}</td>
+            <td>{usuario.user || 'N/A'}</td>
             <td>
-              <Update userId={usuarios._id}   usuarios={usuarios} onUpdated={() => {}} />
+              {typeof usuario.rol === 'object' && usuario.rol !== null
+                ? usuario.rol.nombre || usuario.rol.name || 'N/A'
+                : usuario.rol || 'N/A'}
+            </td>
+            <td>
+              {usuario.estado ? (
+                <span style={{ color: 'limegreen', fontWeight: 'bold' }}>
+                  🟢 Activo
+                </span>
+              ) : (
+                <span style={{ color: 'red', fontWeight: 'bold' }}>
+                  🔴 Inactivo
+                </span>
+              )}
+            </td>
+            <td>{formatFecha(usuario.createdAt || usuario.fecha_creacion)}</td>
+            <td>
+              <Update 
+                userId={usuario._id} 
+                usuario={usuario} 
+                onUpdated={() => {
+                  // Recargar la lista después de actualizar
+                  fetch('http://localhost:3001/v1/usuarios')
+                    .then(res => res.json())
+                    .then(data => setUsuarios(data))
+                    .catch(err => console.error('Error al recargar:', err));
+                }} 
+              />            
+              <Delete 
+                userId={usuario._id} 
+                usuario={usuario} 
+                onUpdated={() => {
+                  // Recargar la lista después de actualizar
+                  fetch('http://localhost:3001/v1/usuarios')
+                    .then(res => res.json())
+                    .then(data => setUsuarios(data))
+                    .catch(err => console.error('Error al recargar:', err));
+                }} 
+              />
             </td>
           </tr>
         ))}
