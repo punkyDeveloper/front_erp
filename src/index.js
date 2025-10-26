@@ -14,6 +14,7 @@ import Configuracion from "./confuracion/configuracion";
 import Chef from './chef/chef';
 import Rol from './rol/rol';
 import Permisos from './permisos/permisos';
+import Administrador from './adminstrador/admin';
 
 import Bienvenida from './bienvenida/bienvenida';
 
@@ -37,6 +38,7 @@ root.render(
         <Route path="/cierre/chef" element={<Chef />} />
         <Route path="/config/role/rol" element={<Rol />} />
         <Route path="/config/role/permisos" element={<Permisos />} />
+        <Route path="/config/administrador" element={<Administrador />} />
         <Route path="/productos" element={<Productos />} />
 
 

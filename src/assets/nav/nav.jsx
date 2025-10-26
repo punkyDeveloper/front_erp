@@ -133,8 +133,8 @@ const Nav = () => {
                     <NavLink exact to="#" activeClassName="activeClicked">
                       <CDBSidebarMenuItem icon="sliders-h">Bodega</CDBSidebarMenuItem>
                     </NavLink>
-                    <NavLink exact to="#" activeClassName="activeClicked">
-                      <CDBSidebarMenuItem icon="sliders-h">Productos</CDBSidebarMenuItem>
+                    <NavLink exact to="/config/administrador" activeClassName="activeClicked">
+                      <CDBSidebarMenuItem icon="user-circle">Nuevo administrador</CDBSidebarMenuItem>
                     </NavLink>
                   </div>
                 )}
