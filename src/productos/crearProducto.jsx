@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import Form from "react-bootstrap/Form";
@@ -12,7 +12,7 @@ function CrearProducto({ onProductCreated }) {
   const [precio, setPrecio] = useState("");
   const [stock, setStock] = useState("");
   const [compania, setCompania] = useState("");
-  const [companias, setCompanias] = useState([]);
+  const [companias] = useState([]);
 
   const [venta, setVenta] = useState(false);
   const [alquiler, setAlquiler] = useState(false);
