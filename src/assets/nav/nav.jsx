@@ -418,11 +418,11 @@ const Nav = () => {
             </li>
           )}
 
-          {tienePermiso('ver_categorias') && (
+          {tienePermiso('ver_servicios') && (
             <li>
-              <NavLink to="/categorias" className={`nav-item ${isActive('/categorias') ? 'active' : ''}`} title="Categorías">
+              <NavLink to="/servicios" className={`nav-item ${isActive('/servicios') ? 'active' : ''}`} title="Servicios">
                 <i className="fas fa-tags nav-icon"></i>
-                <span className="nav-text">Categorías</span>
+                <span className="nav-text">Servicios</span>
               </NavLink>
             </li>
           )}
