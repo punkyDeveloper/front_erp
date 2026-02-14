@@ -16,7 +16,7 @@ function UpdateUser({ userId, usuario, onUpdated }) {
   useEffect(() => {
     const fetchRoles = async () => {
       try {
-        const res = await fetch("http://localhost:3001/v1/role");
+        const res = await fetch(`${process.env.REACT_APP_API_URL}/role`);
         if (!res.ok) throw new Error("Error al cargar roles");
         const data = await res.json();
         setRoles(data);
@@ -69,7 +69,7 @@ function UpdateUser({ userId, usuario, onUpdated }) {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(`http://localhost:3001/v1/usuario/${userId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/usuario/${userId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

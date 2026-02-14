@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^7.1.0",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
-    "bootstrap": "^5.3.3",
+    "bootstrap": "^5.3.8",
     "cdbreact": "^1.5.19",
     "mdb-react-ui-kit": "^9.0.0",
     "react": "^18.3.1",
@@ -16,6 +17,7 @@
     "react-router": "^6.30.1",
     "react-router-dom": "^6.30.1",
     "react-scripts": "^5.0.1",
+    "recharts": "^3.7.0",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

@@ -143,7 +143,7 @@ function CrearProducto({ onProductCreated }) {
         imagenFile,
       });
 
-      const resp = await fetch("http://localhost:3001/v1/productos", {
+      const resp = await fetch(`${process.env.REACT_APP_API_URL}/productos`, {
         method: "POST",
         body: formData,
       });

@@ -1,16 +1,16 @@
 import Navb from '../assets/nav/nav';
+
 export default function App() {
   return (
-    
     <div style={{ display: 'flex', height: '100vh' }}>
       {/* Sidebar */}
       <Navb />
 
       {/* Contenido derecho */}
-      <div style={{ overflowY: 'auto',  width: '100%' }}>
-    <div style={overlayStyle}>
-      <h1 style={textStyle}>Bienvenid@</h1>
-    </div>
+      <div style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
+        <div style={overlayStyle}>
+          <h1 style={textStyle}>Bienvenid@</h1>
+        </div>
       </div>
     </div>
   )
@@ -18,7 +18,7 @@ export default function App() {
 
 /* --- ESTILOS EN JS (inline + animación global) --- */
 const overlayStyle = {
-  position: "fixed",
+  position: "absolute", // Cambiado de fixed a absolute
   inset: 0,
   background: "linear-gradient(135deg, #4f46e5, #9333ea, #ec4899)",
   display: "flex",

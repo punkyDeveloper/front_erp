@@ -16,36 +16,43 @@ function Example() {
   useEffect(() => {
     const fetchPermisos = async () => {
       try {
-        const res = await fetch("http://localhost:3001/v1/permisosN");
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${process.env.REACT_APP_API_URL}/permisos`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'x-api-key': 'mi_clave_secreta_12345'
+          }
+        });
         const data = await res.json();
-        setPermisosDisponibles(data); // NO se crea id artificial
+        setPermisosDisponibles(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Error al obtener permisos:", error);
+        setPermisosDisponibles([]);
       }
     };
 
     fetchPermisos();
   }, []);
 
-  const permisosFiltrados = permisosDisponibles.filter((permiso) =>
-    permiso.nombre.toLowerCase().includes(busqueda.toLowerCase())
-  );
+  const permisosFiltrados = Array.isArray(permisosDisponibles) 
+    ? permisosDisponibles.filter((permiso) =>
+        permiso.nombre.toLowerCase().includes(busqueda.toLowerCase())
+      )
+    : [];
 
-  const togglePermiso = (permiso) => {
+  const togglePermiso = (nombrePermiso) => {
     setPermisosSeleccionados((prev) =>
-      prev.some((p) => p.nombre === permiso.nombre)
-        ? prev.filter((p) => p.nombre !== permiso.nombre)
-        : [...prev, permiso]
+      prev.includes(nombrePermiso)
+        ? prev.filter((p) => p !== nombrePermiso)
+        : [...prev, nombrePermiso]
     );
   };
 
   const seleccionarTodos = () => {
-    setPermisosSeleccionados((prev) => {
-      const nuevos = permisosFiltrados.filter(
-        (permiso) => !prev.some((p) => p.nombre === permiso.nombre)
-      );
-      return [...prev, ...nuevos];
-    });
+    const nuevos = permisosFiltrados
+      .map(p => p.nombre)
+      .filter(nombre => !permisosSeleccionados.includes(nombre));
+    setPermisosSeleccionados((prev) => [...prev, ...nuevos]);
   };
 
   const deseleccionarTodos = () => setPermisosSeleccionados([]);
@@ -57,18 +64,30 @@ function Example() {
     if (!describe.trim()) return alert("El campo descripción no puede estar vacío");
 
     try {
-      const response = await fetch("http://localhost:3001/v1/roles", {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/roles`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          'Authorization': `Bearer ${token}`,
+          'x-api-key': 'mi_clave_secreta_12345'
+        },
         body: JSON.stringify({
           rol,
-          describe,
+          descripcion: describe,
           permisos: permisosSeleccionados,
         }),
       });
 
-      await response.json();
+      if (!response.ok) {
+        throw new Error('Error al crear rol');
+      }
+
+      alert('Rol creado exitosamente');
       handleClose();
+      setRol('');
+      setDescribe('');
+      setPermisosSeleccionados([]);
     } catch (error) {
       console.error("Error al crear el rol:", error);
       alert("Error al crear el rol");
@@ -91,6 +110,7 @@ function Example() {
               <label>Rol</label>
               <input
                 className="form-control"
+                value={rol}
                 onChange={(e) => setRol(e.target.value)}
               />
             </div>
@@ -99,12 +119,13 @@ function Example() {
               <label>Descripción</label>
               <input
                 className="form-control"
+                value={describe}
                 onChange={(e) => setDescribe(e.target.value)}
               />
             </div>
 
             <div className="form-group m-2">
-              <label>Buscar permisos</label>
+              <label>Buscar permisos ({permisosSeleccionados.length} seleccionados)</label>
               <input
                 type="text"
                 className="form-control mb-2"
@@ -129,8 +150,8 @@ function Example() {
                       className="form-check-input"
                       type="checkbox"
                       id={`permiso-${permiso.nombre}`}
-                      checked={permisosSeleccionados.some((p) => p.nombre === permiso.nombre)}
-                      onChange={() => togglePermiso(permiso)}
+                      checked={permisosSeleccionados.includes(permiso.nombre)}
+                      onChange={() => togglePermiso(permiso.nombre)}
                     />
                     <label className="form-check-label" htmlFor={`permiso-${permiso.nombre}`}>
                       {permiso.nombre}

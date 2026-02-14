@@ -9,7 +9,7 @@ function ProductosTable() {
 
     const fetchProductos = async () => {
       try {
-        const response = await fetch('http://localhost:3001/v1/productos'); // 🔹 tu backend
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/productos`);
         if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
         if (!ignore) setProductos(data);

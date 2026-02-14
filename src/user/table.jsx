@@ -11,7 +11,14 @@ function ResponsiveExample() {
 
     const fetchUsuarios = async () => {
       try {
-        const response = await fetch('http://localhost:3001/v1/usuarios');
+        const token = localStorage.getItem('token');
+        // console.log('Token obtenido:', token);
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/usuarios`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'x-api-key': 'mi_clave_secreta_12345'
+          }
+        });
         if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
         if (!ignore) setUsuarios(data);
@@ -84,7 +91,7 @@ function ResponsiveExample() {
                 usuario={usuario} 
                 onUpdated={() => {
                   // Recargar la lista después de actualizar
-                  fetch('http://localhost:3001/v1/usuarios')
+                  fetch(`${process.env.REACT_APP_API_URL}/usuarios`)
                     .then(res => res.json())
                     .then(data => setUsuarios(data))
                     .catch(err => console.error('Error al recargar:', err));
@@ -95,7 +102,7 @@ function ResponsiveExample() {
                 usuario={usuario} 
                 onUpdated={() => {
                   // Recargar la lista después de actualizar
-                  fetch('http://localhost:3001/v1/usuarios')
+                  fetch(`${process.env.REACT_APP_API_URL}/usuarios`)
                     .then(res => res.json())
                     .then(data => setUsuarios(data))
                     .catch(err => console.error('Error al recargar:', err));

@@ -12,7 +12,7 @@ function DeleteUser({ userId, usuario, onDeleted }) {
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      const response = await fetch(`http://localhost:3001/v1/usuario/${userId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/usuario/${userId}`, {
         method: 'DELETE',
       });
       

@@ -1,137 +1,93 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Importar useNavigate
-import Button from 'react-bootstrap/Button';
-import Col from 'react-bootstrap/Col';
-import Form from 'react-bootstrap/Form';
-import Container from 'react-bootstrap/Container';
-import Row from 'react-bootstrap/Row';
-import './nn.css';
+import { useNavigate } from 'react-router-dom';
+import { Container, Row, Col, Form, Button } from 'react-bootstrap';
 
-function App() {
+function Login() {
   const [validated, setValidated] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  
-  const navigate = useNavigate(); // Hook para redirección
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    
-    // Validaciones del formato
-    const form = event.currentTarget;
-    if (form.checkValidity() === false) {
-      event.stopPropagation();
-      setValidated(true);
-      return;
-    }
-    
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setValidated(true);
-    setError(""); // Limpiar errores previos
+    setError('');
 
-    // Validación de campos
     if (!email || !password) {
-      setError('Por favor, ingrese ambos email y contraseña.');
-      return;
-    }
-
-    if (password.length < 8) {
-      setError("La contraseña no puede ser menor a 8 caracteres");
+      setError('Email y contraseña son obligatorios');
       return;
     }
 
     setLoading(true);
 
     try {
-      const response = await fetch(`http://localhost:3001/v1/login`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': 'mi_clave_secreta_12345' // ✅ API Key agregada
+          'x-api-key': 'mi_clave_secreta_12345'
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password })
       });
 
-      const data = await response.json();
+      const result = await response.json();
+      console.log('RESPUESTA BACKEND:', result);
 
-      if (response.ok && data.success) {
-        console.log('Login exitoso:', data);
-        
-        // ✅ Guardar token en cookie
-        document.cookie = `token=${data.token}; path=/; max-age=3600; SameSite=Strict`;
-        
-        // ✅ Guardar companiaId en cookie
-        if (data.user?.companiaId) {
-          document.cookie = `companiaId=${data.user.companiaId}; path=/; max-age=3600; SameSite=Strict`;
-        }
-        
-        // ✅ Guardar datos del usuario en localStorage (opcional)
-        localStorage.setItem('user', JSON.stringify(data.user));
-        
-        // ✅ Redireccionar a /bienvenida
-        navigate('/bienvenida');
-        
-      } else {
-        // Error del servidor (credenciales incorrectas, etc.)
-        setError(data.msg || 'Error al iniciar sesión');
+      if (!response.ok || !result.success) {
+        setError(result.message || 'Error en login');
+        return;
       }
-      
+
+      const user = result.data;
+
+      // Guardar token y usuario
+      localStorage.setItem('token', user.token); // NUEVO
+      localStorage.setItem('user', JSON.stringify(user));
+      window.dispatchEvent(new Event('login'));
+      document.cookie = `company=${user.nombreCompany}; path=/; max-age=3600; SameSite=Lax`;
+
+      navigate('/bienvenida');
+
     } catch (err) {
-      console.error('Error en login:', err);
-      setError("Error de conexión con el servidor");
+      console.error(err);
+      setError('Error de conexión con el servidor');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Container fluid className="d-flex justify-content-center align-items-center vh-100">
+    <Container className="vh-100 d-flex align-items-center justify-content-center">
       <Row>
-        <Col className='col-12'>
+        <Col>
           <Form noValidate validated={validated} onSubmit={handleSubmit}>
-            <Form.Group className='login' as={Col} md="12">
-              <Form.Label>Email address</Form.Label>
-              <Form.Control 
+            <Form.Group className="mb-3">
+              <Form.Label>Email</Form.Label>
+              <Form.Control
                 required
-                id="email"
-                name="email"
                 type="email"
-                autoComplete="email"
-                placeholder="email@gmail.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)} 
+                onChange={(e) => setEmail(e.target.value)}
               />
-              <Form.Control.Feedback type="invalid">
-                Por favor ingrese un email válido.
-              </Form.Control.Feedback>
             </Form.Group>
 
-            <Form.Group className='login' as={Col} md="12">
-              <Form.Label>Password</Form.Label>
-              <Form.Control 
-                required 
-                id="password"
-                name="password"
+            <Form.Group className="mb-3">
+              <Form.Label>Contraseña</Form.Label>
+              <Form.Control
+                required
+                type="password"
                 value={password}
-                type="password" 
-                placeholder="Enter password" 
                 onChange={(e) => setPassword(e.target.value)}
-                minLength={8}
               />
-              <Form.Control.Feedback type="invalid">
-                La contraseña debe tener al menos 8 caracteres.
-              </Form.Control.Feedback>
             </Form.Group>
 
-            {error && <p className="text-danger mt-2">{error}</p>}
+            {error && <p className="text-danger">{error}</p>}
 
-            <Button 
-              className="mt-3" 
-              type="submit"
-              disabled={loading}
-            >
-              {loading ? 'Cargando...' : 'Iniciar Sesión'}
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Cargando...' : 'Ingresar'}
             </Button>
           </Form>
         </Col>
@@ -140,4 +96,4 @@ function App() {
   );
 }
 
-export default App;
+export default Login;
