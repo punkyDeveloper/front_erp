@@ -11,7 +11,7 @@ const INITIAL_DATA = [
     descripcion: "Cambio de aceite y filtros",
     kilometraje: 15000,
     fecha: "2026-01-15",
-    estado: "Completado",
+    estado: "Finalizado",
     costo: 185000,
     taller: "AutoServicio Express",
     servicios: ["Cambio de aceite", "Cambio de filtros"],
@@ -25,7 +25,7 @@ const INITIAL_DATA = [
     descripcion: "Reemplazo de pastillas de freno delanteras",
     kilometraje: 32000,
     fecha: "2026-02-03",
-    estado: "En proceso",
+    estado: "En progreso",
     costo: 420000,
     taller: "FrenoSeguro Ltda",
     servicios: ["Cambio de pastillas de freno", "Cambio de discos de freno"],
@@ -53,7 +53,7 @@ const INITIAL_DATA = [
     descripcion: "Cambio de batería y revisión eléctrica",
     kilometraje: 58000,
     fecha: "2025-12-20",
-    estado: "Completado",
+    estado: "Finalizado",
     costo: 350000,
     taller: "ElectroAuto Center",
     servicios: ["Cambio de batería", "Revisión eléctrica"],
@@ -63,19 +63,19 @@ const INITIAL_DATA = [
     cedula: "1098765432",
     placa: "MNO-345",
     vehiculo: "Kia Sportage 2024",
-    tipo: "Preventivo",
+    tipo: "Predictivo",
     descripcion: "Primera revisión de garantía",
     kilometraje: 5000,
     fecha: "2026-02-08",
-    estado: "Completado",
+    estado: "Finalizado",
     costo: 0,
     taller: "Kia Concesionario Oficial",
     servicios: ["Cambio de aceite", "Cambio de filtros", "Escaneo computarizado"],
   },
 ];
 
-const TIPOS = ["Preventivo", "Correctivo"];
-const ESTADOS = ["Pendiente", "En proceso", "Completado"];
+const TIPOS = ["Preventivo", "Correctivo", "Predictivo"];
+const ESTADOS = ["Pendiente", "En progreso", "En espera", "Finalizado", "Cancelado"];
 
 const SERVICIOS = [
   "Cambio de aceite",
@@ -105,14 +105,20 @@ const formatCurrency = (value) =>
 
 const estadoColor = (estado) => {
   const map = {
-    Completado: { bg: "#ECFDF5", text: "#059669", border: "#A7F3D0" },
-    "En proceso": { bg: "#FFF7ED", text: "#EA580C", border: "#FED7AA" },
+    Finalizado: { bg: "#ECFDF5", text: "#059669", border: "#A7F3D0" },
+    "En progreso": { bg: "#FFF7ED", text: "#EA580C", border: "#FED7AA" },
+    "En espera": { bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" },
     Pendiente: { bg: "#EFF6FF", text: "#2563EB", border: "#BFDBFE" },
+    Cancelado: { bg: "#FEE2E2", text: "#DC2626", border: "#FECACA" },
   };
   return map[estado] || { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
 };
 
-const tipoIcon = (tipo) => (tipo === "Preventivo" ? "🔧" : "⚠️");
+const tipoIcon = (tipo) => {
+  if (tipo === "Preventivo") return "🔧";
+  if (tipo === "Predictivo") return "📊";
+  return "⚠️";
+};
 
 // ─── STYLES ────────────────────────────────────────────────
 const styles = {
@@ -638,8 +644,8 @@ export default function ConsultarMantenimientos() {
 
   const stats = {
     total: data.length,
-    completados: data.filter((d) => d.estado === "Completado").length,
-    enProceso: data.filter((d) => d.estado === "En proceso").length,
+    completados: data.filter((d) => d.estado === "Finalizado").length,
+    enProceso: data.filter((d) => d.estado === "En progreso").length,
     costoTotal: data.reduce((sum, d) => sum + d.costo, 0),
   };
 
@@ -694,6 +700,14 @@ export default function ConsultarMantenimientos() {
     setDeleteTarget(null);
   };
 
+  const handleMarkAsCompleted = (item) => {
+    setData((prev) =>
+      prev.map((d) =>
+        d.id === item.id ? { ...d, estado: "Finalizado" } : d
+      )
+    );
+  };
+
   const updateField = (field, value) => setForm((f) => ({ ...f, [field]: value }));
 
   return (
@@ -722,7 +736,7 @@ export default function ConsultarMantenimientos() {
         <div style={styles.statsRow} className="stats-row">
           {[
             { label: "Total registros", value: stats.total, accent: "#1A1A2E" },
-            { label: "Completados", value: stats.completados, accent: "#059669" },
+            { label: "Finalizados", value: stats.completados, accent: "#059669" },
             { label: "En proceso", value: stats.enProceso, accent: "#EA580C" },
             { label: "Costo total", value: formatCurrency(stats.costoTotal), accent: "#7C3AED" },
           ].map((s, i) => (
@@ -822,6 +836,17 @@ export default function ConsultarMantenimientos() {
                     <td style={{ ...styles.td, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{formatCurrency(item.costo)}</td>
                     <td style={{ ...styles.td, textAlign: "center" }}>
                       <div style={{ display: "flex", justifyContent: "center", gap: 2, opacity: hoveredRow === item.id ? 1 : 0.4, transition: "opacity 0.2s" }}>
+                        {item.estado !== "Finalizado" && (
+                          <button
+                            style={styles.actionBtn}
+                            title="Marcar como finalizado"
+                            onClick={() => handleMarkAsCompleted(item)}
+                            onMouseOver={(e) => (e.currentTarget.style.background = "#ECFDF5")}
+                            onMouseOut={(e) => (e.currentTarget.style.background = "transparent")}
+                          >
+                            ✓
+                          </button>
+                        )}
                         <button
                           style={styles.actionBtn}
                           title="Editar"
