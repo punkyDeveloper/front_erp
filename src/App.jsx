@@ -47,7 +47,7 @@ function Login() {
       localStorage.setItem('token', user.token); // NUEVO
       localStorage.setItem('user', JSON.stringify(user));
       window.dispatchEvent(new Event('login'));
-      document.cookie = `company=${user.nombreCompany}; path=/; max-age=3600; SameSite=Lax`;
+      document.cookie = `company=${user.nombreCompany}; path=/; SameSite=Lax`;
 
       navigate('/bienvenida');
 
