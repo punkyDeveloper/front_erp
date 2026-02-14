@@ -606,7 +606,7 @@ const Nav = () => {
                       </li>
                     )}
 
-                    {tienePermiso('crear_usuarios') && (
+                    {tienePermiso('ver_administrador') && (
                       <li>
                         <NavLink to="/config/administrador" className={`nav-item ${isActive('/config/administrador') ? 'active' : ''}`}>
                           <i className="fas fa-user-plus nav-icon"></i>
