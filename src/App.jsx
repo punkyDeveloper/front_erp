@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Container, Row, Col, Form, Button } from 'react-bootstrap';
+import { Container, Row, Col, Form, Button, Spinner } from 'react-bootstrap';
 
 function Login() {
   const [validated, setValidated] = useState(false);
@@ -34,44 +34,73 @@ function Login() {
       });
 
       const result = await response.json();
-      console.log('RESPUESTA BACKEND:', result);
+      console.log('📥 RESPUESTA BACKEND:', result);
 
       if (!response.ok || !result.success) {
         setError(result.message || 'Error en login');
+        setLoading(false);
         return;
       }
 
       const user = result.data;
 
-      // Guardar token y usuario
-      localStorage.setItem('token', user.token); // NUEVO
+      // 1️⃣ Limpiar localStorage anterior (por si acaso)
+      localStorage.clear();
+
+      // 2️⃣ Guardar token y usuario
+      localStorage.setItem('token', user.token);
       localStorage.setItem('user', JSON.stringify(user));
-      window.dispatchEvent(new Event('login'));
+      
+      // 3️⃣ Guardar cookie de company
       document.cookie = `company=${user.nombreCompany}; path=/; max-age=36000; SameSite=Lax`;
 
-      navigate('/bienvenida');
+      console.log('✅ Token guardado:', user.token);
+      console.log('✅ Usuario guardado:', user);
+
+      // 4️⃣ Disparar evento 'login' para que Nav y PermissionsContext se actualicen
+      window.dispatchEvent(new Event('login'));
+      console.log('🔥 Evento "login" disparado');
+
+      // 5️⃣ Esperar un momento para que los permisos se carguen
+      // Esto es crucial porque fetchPermisos() es asíncrono
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      console.log('🚀 Navegando a /bienvenida');
+      
+      // 6️⃣ Navegar a la página de bienvenida
+      navigate('/bienvenida', { replace: true });
 
     } catch (err) {
-      console.error(err);
+      console.error('❌ Error en login:', err);
       setError('Error de conexión con el servidor');
-    } finally {
       setLoading(false);
     }
+    // ⚠️ NO pongas setLoading(false) aquí porque queremos mantener el loading
+    // hasta que la navegación ocurra
   };
 
   return (
     <Container className="vh-100 d-flex align-items-center justify-content-center">
-      <Row>
+      <Row className="w-100" style={{ maxWidth: '400px' }}>
         <Col>
+          <div className="text-center mb-4">
+            <h2>Iniciar Sesión</h2>
+          </div>
+
           <Form noValidate validated={validated} onSubmit={handleSubmit}>
             <Form.Group className="mb-3">
               <Form.Label>Email</Form.Label>
               <Form.Control
                 required
                 type="email"
+                placeholder="correo@ejemplo.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
               />
+              <Form.Control.Feedback type="invalid">
+                Por favor ingresa un email válido
+              </Form.Control.Feedback>
             </Form.Group>
 
             <Form.Group className="mb-3">
@@ -79,15 +108,43 @@ function Login() {
               <Form.Control
                 required
                 type="password"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
               />
+              <Form.Control.Feedback type="invalid">
+                La contraseña es requerida
+              </Form.Control.Feedback>
             </Form.Group>
 
-            {error && <p className="text-danger">{error}</p>}
+            {error && (
+              <div className="alert alert-danger" role="alert">
+                {error}
+              </div>
+            )}
 
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Cargando...' : 'Ingresar'}
+            <Button 
+              type="submit" 
+              disabled={loading}
+              className="w-100"
+              variant="primary"
+            >
+              {loading ? (
+                <>
+                  <Spinner
+                    as="span"
+                    animation="border"
+                    size="sm"
+                    role="status"
+                    aria-hidden="true"
+                    className="me-2"
+                  />
+                  Cargando permisos...
+                </>
+              ) : (
+                'Ingresar'
+              )}
             </Button>
           </Form>
         </Col>
