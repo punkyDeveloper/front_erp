@@ -86,6 +86,8 @@ const LockIcon = () => (
 // COMPONENTE PRINCIPAL
 // ═══════════════════════════════════════════════════════════
 export default function ServiciosModule() {
+  const [editingSubId, setEditingSubId] = useState(null);
+
   const { tienePermiso } = usePermisos();
   
   const [servicios, setServicios] = useState([]);
@@ -110,72 +112,76 @@ export default function ServiciosModule() {
     subservicios: []
   });
   
-  const [newSubservicio, setNewSubservicio] = useState({
-    nombre: '',
-    descripcion: '',
-    tiempo: '',
-    valor: ''
-  });
+const [newSubservicio, setNewSubservicio] = useState({
+  supnombre: '',
+  descripcion: '',
+  suptiempo: '',
+  supvalor: ''
+});
 
   // ═══════════════════════════════════════════════════════════
   // 📡 ENDPOINT: GET /api/servicios - Obtener todos los servicios
   // ═══════════════════════════════════════════════════════════
-  const cargarServicios = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      console.log('📡 GET', `${API_URL}/servicios`);
-      
-      const response = await fetch(`${API_URL}/servicios`, {
-        method: 'GET',
-        headers: getHeaders()
-      });
+const cargarServicios = async () => {
+  try {
+    setLoading(true);
+    setError(null);
 
-      const result = await response.json();
-      console.log('📥 Respuesta:', result);
+    console.log('📡 GET', `${API_URL}/servicios`);
 
-      // Manejar errores específicos
-      if (response.status === 404) {
-        throw new Error('Endpoint no encontrado. Verifica la ruta en el backend.');
-      }
+    const response = await fetch(`${API_URL}/servicios`, {
+      method: 'GET',
+      headers: getHeaders()
+    });
 
-      if (!response.ok) {
-        throw new Error(result.error || result.message || 'Error al obtener servicios');
-      }
-
-      // Validar que data existe
-      if (!result.data || !Array.isArray(result.data)) {
-        setServicios([]);
-        setLoading(false);
-        return;
-      }
-
-      // Transformar datos del backend al formato del frontend
-      const serviciosTransformados = result.data.map(servicio => ({
-        id: servicio._id || servicio.id,
-        codigo: `SRV-${String(servicio._id || servicio.id).slice(-3)}`,
-        nombre: servicio.nombre,
-        tiempo: servicio.tiempo,
-        valor: servicio.valor,
-        subservicios: (servicio.idSupservicios || []).map(sub => ({
-          id: sub._id || sub.id,
-          codigo: `SUB-${String(sub._id || sub.id).slice(-3)}`,
-          nombre: sub.supnombre,
-          descripcion: sub.descripcion || '',
-          tiempo: sub.suptiempo,
-          valor: sub.supvalor
-        }))
-      }));
-
-      setServicios(serviciosTransformados);
-    } catch (err) {
-      console.error('❌ Error cargando servicios:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
+    // ✅ Si no es JSON (HTML de error), mostrar vacío silenciosamente
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.warn('⚠️ Backend no devolvió JSON:', response.status);
+      setServicios([]);
+      return;
     }
-  };
+
+    const result = await response.json();
+    console.log('📥 Respuesta:', result);
+
+    // ✅ Cualquier error HTTP → lista vacía, no pantalla de error
+    if (!response.ok) {
+      console.warn('⚠️ Error HTTP:', response.status, result);
+      setServicios([]);
+      return;
+    }
+
+    if (!result.data || !Array.isArray(result.data)) {
+      setServicios([]);
+      return;
+    }
+
+const serviciosTransformados = result.data.map(servicio => ({
+  id: servicio._id || servicio.id,
+  codigo: `SRV-${String(servicio._id || servicio.id).slice(-3)}`,
+  nombre: servicio.nombre || '',
+  tiempo: servicio.tiempo || '',
+  valor: servicio.valor ?? 0,
+  subservicios: (servicio.idSupservicios || []).map(sub => ({
+    id: sub._id || sub.id || sub,
+    codigo: `SUB-${String(sub._id || sub.id || sub).slice(-3)}`,
+    nombre: sub.supnombre || '',
+    descripcion: sub.descripcion || '',
+    tiempo: sub.suptiempo || '',
+    valor: sub.supvalor ?? 0
+  }))
+}));
+
+    setServicios(serviciosTransformados);
+  } catch (err) {
+    // ✅ Errores de red o parseo → consola únicamente, UI muestra vacío
+    console.error('❌ Error cargando servicios:', err);
+    setServicios([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     cargarServicios();
@@ -271,44 +277,27 @@ export default function ServiciosModule() {
   // ═══════════════════════════════════════════════════════════
   // LÓGICA: Crear servicio con subservicios
   // ═══════════════════════════════════════════════════════════
-  const crearServicioCompleto = async (servicioData, subServiciosData) => {
-    try {
-      console.log('🚀 Iniciando creación completa...');
-      
-      // 1️⃣ Crear subservicios primero
-      const subServiciosCreados = [];
-      
-      for (const subData of subServiciosData) {
-        const subCreado = await crearSubServicio({
-          supnombre: subData.nombre,
-          suptiempo: subData.tiempo,
-          supvalor: subData.valor,
-          descripcion: subData.descripcion || ''
-        });
-        subServiciosCreados.push(subCreado);
-      }
-
-      console.log('✅ SubServicios creados:', subServiciosCreados);
-
-      // 2️⃣ Extraer IDs
-      const idsSubServicios = subServiciosCreados.map(sub => sub._id || sub.id);
-      console.log('🔗 IDs:', idsSubServicios);
-
-      // 3️⃣ Crear servicio con IDs
-      const servicioCreado = await crearServicio({
+const crearServicioCompleto = async (servicioData, subServiciosData) => {
+  try {
+    const response = await fetch(`${API_URL}/servicios`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
         nombre: servicioData.nombre,
         tiempo: servicioData.tiempo,
         valor: servicioData.valor,
-        idSupservicios: idsSubServicios
-      });
-
-      console.log('✅ Servicio creado:', servicioCreado);
-      return servicioCreado;
-    } catch (error) {
-      console.error('❌ Error en creación completa:', error);
-      throw error;
-    }
-  };
+        subservicios: subServiciosData
+      })
+    });
+    const result = await response.json();
+    console.log('📥 Respuesta crear:', result);
+    if (!response.ok) throw new Error(result.error || 'Error al crear servicio');
+    return result.data;
+  } catch (error) {
+    console.error('❌ Error:', error);
+    throw error;
+  }
+};
 
   // ═══════════════════════════════════════════════════════════
   // FUNCIONES DE UI
@@ -337,52 +326,53 @@ export default function ServiciosModule() {
     setExpandedRows(newExpanded);
   };
 
-  const handleOpenModal = (service = null) => {
-    if (service) {
-      setEditingService(service);
-      setFormData({
-        nombre: service.nombre,
-        tiempo: service.tiempo,
-        valor: service.valor,
-        subservicios: [...service.subservicios]
-      });
-    } else {
-      setEditingService(null);
-      setFormData({
-        nombre: '',
-        tiempo: '',
-        valor: '',
-        subservicios: []
-      });
-    }
-    setShowModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
+const handleOpenModal = (service = null) => {
+  if (service) {
+    setEditingService(service);
+    setFormData({
+      nombre: service.nombre,
+      tiempo: service.tiempo,
+      valor: service.valor,
+      subservicios: service.subservicios.map(sub => ({
+        id: sub.id,
+        codigo: sub.codigo,
+        supnombre: sub.nombre,
+        suptiempo: sub.tiempo,
+        supvalor: sub.valor,
+        descripcion: sub.descripcion || ''
+      }))
+    });
+  } else {
     setEditingService(null);
     setFormData({ nombre: '', tiempo: '', valor: '', subservicios: [] });
-    setNewSubservicio({ nombre: '', descripcion: '', tiempo: '', valor: '' });
-  };
+  }
+  setEditingSubId(null);
+  setShowModal(true);
+};
 
-  const handleAddSubservicio = () => {
-    if (newSubservicio.nombre && newSubservicio.tiempo && newSubservicio.valor) {
-      const subId = Date.now();
-      const subservicio = {
-        id: subId,
-        codigo: `SUB-${String(subId).slice(-3).padStart(3, '0')}`,
-        nombre: newSubservicio.nombre,
-        descripcion: newSubservicio.descripcion,
-        tiempo: newSubservicio.tiempo,
-        valor: parseFloat(newSubservicio.valor)
-      };
-      setFormData({
-        ...formData,
-        subservicios: [...formData.subservicios, subservicio]
-      });
-      setNewSubservicio({ nombre: '', descripcion: '', tiempo: '', valor: '' });
-    }
-  };
+const handleCloseModal = () => {
+  setShowModal(false);
+  setEditingService(null);
+  setEditingSubId(null); // ✅
+  setFormData({ nombre: '', tiempo: '', valor: '', subservicios: [] });
+  setNewSubservicio({ supnombre: '', descripcion: '', suptiempo: '', supvalor: '' });
+};
+
+const handleAddSubservicio = () => {
+  if (newSubservicio.supnombre && newSubservicio.suptiempo && newSubservicio.supvalor) {
+    const subId = Date.now().toString();
+    const subservicio = {
+      id: subId,
+      codigo: `SUB-${subId.slice(-3)}`,
+      supnombre: newSubservicio.supnombre,
+      descripcion: newSubservicio.descripcion || '',
+      suptiempo: newSubservicio.suptiempo,
+      supvalor: parseFloat(newSubservicio.supvalor)
+    };
+    setFormData(prev => ({ ...prev, subservicios: [...prev.subservicios, subservicio] }));
+    setNewSubservicio({ supnombre: '', descripcion: '', suptiempo: '', supvalor: '' });
+  }
+};
 
   const handleRemoveSubservicio = (subId) => {
     setFormData({
@@ -391,49 +381,53 @@ export default function ServiciosModule() {
     });
   };
 
-  const handleSaveService = async () => {
-    if (!formData.nombre || !formData.tiempo || !formData.valor) {
-      alert('Por favor completa todos los campos obligatorios');
-      return;
-    }
+const handleSaveService = async () => {
+  if (!formData.nombre || !formData.tiempo || !formData.valor) {
+    alert('Por favor completa todos los campos obligatorios');
+    return;
+  }
 
-    try {
-      setSavingService(true);
+  try {
+    setSavingService(true);
 
-      if (editingService) {
-        // EDITAR
-        await actualizarServicio(editingService.id, {
+    const subserviciosPayload = formData.subservicios.map(sub => ({
+      _id: String(sub.id).length === 24 ? sub.id : null,
+      supnombre: sub.supnombre || '',
+      suptiempo: sub.suptiempo || '',
+      supvalor: parseFloat(sub.supvalor) || 0,
+      descripcion: sub.descripcion || ''
+    }));
+
+    if (editingService) {
+      const response = await fetch(`${API_URL}/servicios/${editingService.id}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({
           nombre: formData.nombre,
           tiempo: formData.tiempo,
-          valor: parseFloat(formData.valor)
-        });
-      } else {
-        // CREAR
-        const servicioData = {
-          nombre: formData.nombre,
-          tiempo: formData.tiempo,
-          valor: parseFloat(formData.valor)
-        };
-
-        const subServiciosData = formData.subservicios.map(sub => ({
-          nombre: sub.nombre,
-          descripcion: sub.descripcion,
-          tiempo: sub.tiempo,
-          valor: sub.valor
-        }));
-
-        await crearServicioCompleto(servicioData, subServiciosData);
-      }
-
-      await cargarServicios();
-      handleCloseModal();
-    } catch (err) {
-      console.error('Error:', err);
-      alert(err.message || 'Error al guardar el servicio');
-    } finally {
-      setSavingService(false);
+          valor: parseFloat(formData.valor),
+          subservicios: subserviciosPayload
+        })
+      });
+      const result = await response.json();
+      console.log('📥 Respuesta editar:', result);
+      if (!response.ok) throw new Error(result.error || 'Error al editar');
+    } else {
+      await crearServicioCompleto(
+        { nombre: formData.nombre, tiempo: formData.tiempo, valor: parseFloat(formData.valor) },
+        subserviciosPayload
+      );
     }
-  };
+
+    await cargarServicios();
+    handleCloseModal();
+  } catch (err) {
+    console.error('Error:', err);
+    alert(err.message || 'Error al guardar el servicio');
+  } finally {
+    setSavingService(false);
+  }
+};
 
   const handleDeleteService = (id) => {
     setServiceToDelete(id);
@@ -756,7 +750,7 @@ export default function ServiciosModule() {
                             </td>
                             <td className="text-gray">{servicio.tiempo}</td>
                             <td>
-                              <span className="price">${servicio.valor.toLocaleString()}</span>
+                              <span className="price">${(servicio.valor ?? 0).toLocaleString()}</span>
                             </td>
                             <td>
                               <span className="badge badge-count">{servicio.subservicios.length}</span>
@@ -804,7 +798,7 @@ export default function ServiciosModule() {
                                           </div>
                                           <div className="subservicio-details">
                                             <span className="text-gray">{sub.tiempo}</span>
-                                            <span className="price">${sub.valor.toLocaleString()}</span>
+                                            <span className="price">${(sub.valor ?? 0).toLocaleString()}</span>
                                           </div>
                                         </div>
                                       </div>
@@ -908,70 +902,147 @@ export default function ServiciosModule() {
               <div className="subservicios-section">
                 <h3 className="section-title">Subservicios</h3>
 
-                <div className="subservicios-form">
-                  <input
-                    type="text"
-                    value={newSubservicio.nombre}
-                    onChange={(e) => setNewSubservicio({ ...newSubservicio, nombre: e.target.value })}
-                    className="form-input"
-                    placeholder="Nombre del subservicio"
-                  />
-                  <textarea
-                    value={newSubservicio.descripcion}
-                    onChange={(e) => setNewSubservicio({ ...newSubservicio, descripcion: e.target.value })}
-                    className="form-textarea"
-                    placeholder="Descripción del subservicio"
-                    rows="2"
-                  />
-                  <div className="form-row">
-                    <input
-                      type="text"
-                      value={newSubservicio.tiempo}
-                      onChange={(e) => setNewSubservicio({ ...newSubservicio, tiempo: e.target.value })}
-                      className="form-input"
-                      placeholder="Tiempo (ej: 3 días)"
-                    />
-                    <input
-                      type="number"
-                      value={newSubservicio.valor}
-                      onChange={(e) => setNewSubservicio({ ...newSubservicio, valor: e.target.value })}
-                      className="form-input"
-                      placeholder="Valor ($)"
-                    />
-                  </div>
-                  <button onClick={handleAddSubservicio} className="btn-add-sub">
-                    <PlusIcon />
-                    Agregar Subservicio
-                  </button>
-                </div>
+<div className="subservicios-form">
+  <input
+    type="text"
+    value={newSubservicio.supnombre}
+    onChange={(e) => setNewSubservicio({ ...newSubservicio, supnombre: e.target.value })}
+    className="form-input"
+    placeholder="Nombre del subservicio"
+  />
+  <textarea
+    value={newSubservicio.descripcion}
+    onChange={(e) => setNewSubservicio({ ...newSubservicio, descripcion: e.target.value })}
+    className="form-textarea"
+    placeholder="Descripción del subservicio"
+    rows="2"
+  />
+  <div className="form-row">
+    <input
+      type="text"
+      value={newSubservicio.suptiempo}
+      onChange={(e) => setNewSubservicio({ ...newSubservicio, suptiempo: e.target.value })}
+      className="form-input"
+      placeholder="Tiempo (ej: 3 días)"
+    />
+    <input
+      type="number"
+      value={newSubservicio.supvalor}
+      onChange={(e) => setNewSubservicio({ ...newSubservicio, supvalor: e.target.value })}
+      className="form-input"
+      placeholder="Valor ($)"
+    />
+  </div>
+  <button onClick={handleAddSubservicio} className="btn-add-sub">
+    <PlusIcon />
+    Agregar Subservicio
+  </button>
+</div>
 
-                {formData.subservicios.length > 0 && (
-                  <div className="subservicios-list-modal">
-                    {formData.subservicios.map((sub) => (
-                      <div key={sub.id} className="subservicio-card">
-                        <div className="subservicio-card-content">
-                          <div className="subservicio-card-header">
-                            <span className="badge badge-secondary-small">{sub.codigo}</span>
-                            <span className="subservicio-card-name">{sub.nombre}</span>
-                          </div>
-                          {sub.descripcion && (
-                            <p className="subservicio-card-desc">{sub.descripcion}</p>
-                          )}
-                          <div className="subservicio-card-details">
-                            <span>⏱️ {sub.tiempo}</span>
-                            <span className="price">💰 ${sub.valor}</span>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleRemoveSubservicio(sub.id)}
-                          className="btn-remove-sub"
-                        >
-                          <TrashIcon />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+{formData.subservicios.length > 0 && (
+  <div className="subservicios-list-modal">
+    {formData.subservicios.map((sub) => (
+      <div key={sub.id} className="subservicio-card">
+        {editingSubId === sub.id ? (
+          // ✅ MODO EDICIÓN
+          <div style={{ flex: 1 }}>
+            <input
+              type="text"
+              value={sub.supnombre}
+              onChange={(e) => setFormData({
+                ...formData,
+                subservicios: formData.subservicios.map(s =>
+                  s.id === sub.id ? { ...s, supnombre: e.target.value } : s
+                )
+              })}
+              className="form-input"
+              placeholder="Nombre"
+              style={{ marginBottom: '0.5rem' }}
+            />
+            <textarea
+              value={sub.descripcion}
+              onChange={(e) => setFormData({
+                ...formData,
+                subservicios: formData.subservicios.map(s =>
+                  s.id === sub.id ? { ...s, descripcion: e.target.value } : s
+                )
+              })}
+              className="form-textarea"
+              placeholder="Descripción"
+              rows="2"
+              style={{ marginBottom: '0.5rem' }}
+            />
+            <div className="form-row" style={{ marginBottom: '0.5rem' }}>
+              <input
+                type="text"
+                value={sub.suptiempo}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  subservicios: formData.subservicios.map(s =>
+                    s.id === sub.id ? { ...s, suptiempo: e.target.value } : s
+                  )
+                })}
+                className="form-input"
+                placeholder="Tiempo"
+              />
+              <input
+                type="number"
+                value={sub.supvalor}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  subservicios: formData.subservicios.map(s =>
+                    s.id === sub.id ? { ...s, supvalor: parseFloat(e.target.value) } : s
+                  )
+                })}
+                className="form-input"
+                placeholder="Valor ($)"
+              />
+            </div>
+            <button
+              onClick={() => setEditingSubId(null)}
+              style={{ background: '#4f46e5', color: 'white', border: 'none', borderRadius: '0.5rem', padding: '0.4rem 1rem', cursor: 'pointer', width: '100%' }}
+            >
+              ✅ Listo
+            </button>
+          </div>
+        ) : (
+          // ✅ MODO VISTA
+          <>
+            <div className="subservicio-card-content">
+              <div className="subservicio-card-header">
+                <span className="badge badge-secondary-small">{sub.codigo}</span>
+                <span className="subservicio-card-name">{sub.supnombre}</span>
+              </div>
+              {sub.descripcion && (
+                <p className="subservicio-card-desc">{sub.descripcion}</p>
+              )}
+              <div className="subservicio-card-details">
+                <span>⏱️ {sub.suptiempo}</span>
+                <span className="price">💰 ${sub.supvalor}</span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginLeft: '0.5rem' }}>
+              <button
+                onClick={() => setEditingSubId(sub.id)}
+                className="btn-icon btn-edit"
+                title="Editar subservicio"
+              >
+                <EditIcon />
+              </button>
+              <button
+                onClick={() => handleRemoveSubservicio(sub.id)}
+                className="btn-remove-sub"
+                title="Eliminar subservicio"
+              >
+                <TrashIcon />
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    ))}
+  </div>
+)}
               </div>
             </div>
 
