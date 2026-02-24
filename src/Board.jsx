@@ -327,7 +327,7 @@ export default function Dashboard() {
           </div>
           {tieneAlguno && (
             <div className="tabs">
-              {["mensual","trimestral","anual"].map(p => (
+              {["mensual","anual"].map(p => (
                 <button key={p} className={`tab ${periodo===p?"on":""}`} onClick={() => setPeriodo(p)}>
                   {p.charAt(0).toUpperCase()+p.slice(1)}
                 </button>
