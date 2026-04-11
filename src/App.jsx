@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 const MAX_ATTEMPTS   = 5;
 const LOCKOUT_SECS   = 120;
 const API            = process.env.REACT_APP_API_URL;
-const API_KEY        = 'mi_clave_secreta_12345';
+const API_KEY        = process.env.REACT_APP_API_KEY || '';
 
 /* ─────────────────────────────────────────
    HELPERS

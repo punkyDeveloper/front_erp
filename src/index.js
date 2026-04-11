@@ -23,7 +23,9 @@ import Servicios from './servicio/servio';
 import Ingresos from './ingreso/ingresos';
 import Egresos from './egresos/egresos';
 import Cierre from './cierres/cierres';
-
+import Factucion from './facturacion/facturacion';
+import Clientes from './clientes/clientes';
+import PrivateRoute from './components/PrivateRoute';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -31,24 +33,29 @@ root.render(
     <Router>
       <PermissionsProvider>
         <Routes>
+          {/* Pública: login */}
           <Route path="/" element={<App />} />
-          <Route path="/bienvenida" element={<Bienvenida />} />
-          <Route path="/dashboard" element={<Board />} />
-          <Route path="/Usuarios" element={<RegistrarUsuario />} />
-          <Route path="/user" element={<User />} />
-          <Route path="/Pos" element={<Pos />} />
-          <Route path="/Time" element={<Time />} />
-          <Route path="/configuracion" element={<Configuracion />} />
-          <Route path="/cierre/chef" element={<Chef />} />
-          <Route path="/config/role/rol" element={<Rol />} />
-          <Route path="/config/role/permisos" element={<Permisos />} />
-          <Route path="/config/administrador" element={<Administrador />} />
-          <Route path="/productos" element={<Productos />} />
-          <Route path="/mecanica" element={<Mecanica />} />
-          <Route path="/servicios" element={<Servicios />} />
-          <Route path="/ingresos" element={<Ingresos />} />
-          <Route path="/egresos" element={<Egresos />} />
-          <Route path="/cierres" element={<Cierre />} />
+
+          {/* Rutas protegidas */}
+          <Route path="/bienvenida"           element={<PrivateRoute><Bienvenida /></PrivateRoute>} />
+          <Route path="/dashboard"            element={<PrivateRoute><Board /></PrivateRoute>} />
+          <Route path="/Usuarios"             element={<PrivateRoute><RegistrarUsuario /></PrivateRoute>} />
+          <Route path="/user"                 element={<PrivateRoute><User /></PrivateRoute>} />
+          <Route path="/Pos"                  element={<PrivateRoute><Pos /></PrivateRoute>} />
+          <Route path="/Time"                 element={<PrivateRoute><Time /></PrivateRoute>} />
+          <Route path="/configuracion"        element={<PrivateRoute><Configuracion /></PrivateRoute>} />
+          <Route path="/cierre/chef"          element={<PrivateRoute><Chef /></PrivateRoute>} />
+          <Route path="/config/role/rol"      element={<PrivateRoute><Rol /></PrivateRoute>} />
+          <Route path="/config/role/permisos" element={<PrivateRoute><Permisos /></PrivateRoute>} />
+          <Route path="/config/administrador" element={<PrivateRoute><Administrador /></PrivateRoute>} />
+          <Route path="/productos"            element={<PrivateRoute><Productos /></PrivateRoute>} />
+          <Route path="/mecanica"             element={<PrivateRoute><Mecanica /></PrivateRoute>} />
+          <Route path="/servicios"            element={<PrivateRoute><Servicios /></PrivateRoute>} />
+          <Route path="/ingresos"             element={<PrivateRoute><Ingresos /></PrivateRoute>} />
+          <Route path="/egresos"              element={<PrivateRoute><Egresos /></PrivateRoute>} />
+          <Route path="/cierres"              element={<PrivateRoute><Cierre /></PrivateRoute>} />
+          <Route path="/facturacion"          element={<PrivateRoute><Factucion /></PrivateRoute>} />
+          <Route path="/clientes"             element={<PrivateRoute><Clientes /></PrivateRoute>} />
         </Routes>
       </PermissionsProvider>
     </Router>

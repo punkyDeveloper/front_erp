@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"C:/Users/elsan/OneDrive/Escritorio/back_erp\" log --oneline -20)",
+      "Bash(git -C \"C:/Users/elsan/OneDrive/Escritorio/back-erp\" log --oneline -20)",
+      "Bash(git -C \"C:/Users/elsan/OneDrive/Escritorio/back_erp\" show d8c2224 --stat)",
+      "Read(//c/Users/elsan/OneDrive/Escritorio/back_erp/src/controllers/clientes/**)",
+      "Read(//c/Users/elsan/OneDrive/Escritorio/back_erp/src/controllers/mecanica/**)",
+      "Read(//c/Users/elsan/OneDrive/Escritorio/back_erp/src/routers/**)",
+      "Read(//c/Users/elsan/OneDrive/Escritorio/back_erp/src/moduls/**)",
+      "Read(//c/Users/elsan/OneDrive/Escritorio/back_erp/**)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\elsan\\OneDrive\\Escritorio\\back_erp"
+    ]
+  }
+}

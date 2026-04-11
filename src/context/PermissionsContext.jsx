@@ -18,7 +18,7 @@ export const PermissionsProvider = ({ children }) => {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/me/permisos`, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'x-api-key': 'mi_clave_secreta_12345'
+          'x-api-key': process.env.REACT_APP_API_KEY || ''
         }
       });
 
