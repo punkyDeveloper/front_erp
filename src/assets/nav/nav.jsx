@@ -455,23 +455,36 @@ const Nav = () => {
           )}
 
           {/* ══════════ Finanzas ══════════ */}
-          {tienePermiso('ver_movimientos') && (
+          {(tienePermiso('ver_movimientos') || tienePermiso('ver_libro_contable') || tienePermiso('admin')) && (
             <>
               {showText && <div className="nav-section-label">Finanzas</div>}
 
-              <li>
-                <NavLink to="/ingresos" className={`nav-item ${isActive('/ingresos') ? 'active' : ''}`} title="Ingresos">
-                  <i className="fas fa-arrow-trend-up nav-icon" style={{ color: '#10b981' }}></i>
-                  <span className="nav-text">Ingresos</span>
-                </NavLink>
-              </li>
+              {(tienePermiso('ver_movimientos') || tienePermiso('admin')) && (
+                <li>
+                  <NavLink to="/ingresos" className={`nav-item ${isActive('/ingresos') ? 'active' : ''}`} title="Ingresos">
+                    <i className="fas fa-arrow-trend-up nav-icon" style={{ color: '#10b981' }}></i>
+                    <span className="nav-text">Ingresos</span>
+                  </NavLink>
+                </li>
+              )}
 
-              <li>
-                <NavLink to="/egresos" className={`nav-item ${isActive('/egresos') ? 'active' : ''}`} title="Egresos">
-                  <i className="fas fa-arrow-trend-down nav-icon" style={{ color: '#ef4444' }}></i>
-                  <span className="nav-text">Egresos</span>
-                </NavLink>
-              </li>
+              {(tienePermiso('ver_movimientos') || tienePermiso('admin')) && (
+                <li>
+                  <NavLink to="/egresos" className={`nav-item ${isActive('/egresos') ? 'active' : ''}`} title="Egresos">
+                    <i className="fas fa-arrow-trend-down nav-icon" style={{ color: '#ef4444' }}></i>
+                    <span className="nav-text">Egresos</span>
+                  </NavLink>
+                </li>
+              )}
+
+              {(tienePermiso('ver_libro_contable') || tienePermiso('admin')) && (
+                <li>
+                  <NavLink to="/libro-contable" className={`nav-item ${isActive('/libro-contable') ? 'active' : ''}`} title="Libro Contable">
+                    <i className="fas fa-book nav-icon" style={{ color: '#6366f1' }}></i>
+                    <span className="nav-text">Libro Contable</span>
+                  </NavLink>
+                </li>
+              )}
             </>
           )}
 
