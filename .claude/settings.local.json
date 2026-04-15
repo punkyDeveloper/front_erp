@@ -11,7 +11,8 @@
       "Read(//c/Users/elsan/OneDrive/Escritorio/back_erp/**)"
     ],
     "additionalDirectories": [
-      "c:\\Users\\elsan\\OneDrive\\Escritorio\\back_erp"
+      "c:\\Users\\elsan\\OneDrive\\Escritorio\\back_erp",
+      "c:\\Users\\elsan\\OneDrive\\Escritorio\\front_erp\\src"
     ]
   }
 }

@@ -25,7 +25,9 @@ import Egresos from './egresos/egresos';
 import Cierre from './cierres/cierres';
 import Factucion from './facturacion/facturacion';
 import Clientes from './clientes/clientes';
+import Ventas   from './ventas/ventas';
 import LibroContable from './facturacion/LibroContable';
+import Calendario from './calendario/calendario';
 import PrivateRoute from './components/PrivateRoute';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -58,6 +60,8 @@ root.render(
           <Route path="/facturacion"          element={<PrivateRoute><Factucion /></PrivateRoute>} />
           <Route path="/libro-contable"       element={<PrivateRoute><LibroContable /></PrivateRoute>} />
           <Route path="/clientes"             element={<PrivateRoute><Clientes /></PrivateRoute>} />
+          <Route path="/ventas"               element={<PrivateRoute><Ventas /></PrivateRoute>} />
+          <Route path="/calendario"           element={<PrivateRoute><Calendario /></PrivateRoute>} />
         </Routes>
       </PermissionsProvider>
     </Router>

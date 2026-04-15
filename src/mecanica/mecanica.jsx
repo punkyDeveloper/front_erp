@@ -285,6 +285,7 @@ export default function ConsultarMantenimientos() {
   const [page, setPage]               = useState(1);
   const [rowsPerPage, setRpp]         = useState(20);
   const [total, setTotal]             = useState(0);
+  const [apiStats, setApiStats]       = useState({ totalRegistros: 0, finalizados: 0, enProceso: 0, ingresos: 0 });
 
   // ── Permisos ───────────────────────────────────────────────────────────────
   const [permisos, setPermisos] = useState(() => {
@@ -347,6 +348,7 @@ export default function ConsultarMantenimientos() {
       if (!r.ok) throw new Error(j.msg || 'Error al cargar');
       setData(j.data || []);
       setTotal(j.total || 0);
+      if (j.stats) setApiStats(j.stats);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -463,12 +465,12 @@ export default function ConsultarMantenimientos() {
     }
   };
 
-  // ── Stats locales ───────────────────────────────────────────────────────────
+  // ── Stats globales desde el API ─────────────────────────────────────────────
   const stats = {
-    total:       total,
-    finalizados: data.filter((d) => d.estado === 'Finalizado').length,
-    enProceso:   data.filter((d) => d.estado === 'En progreso').length,
-    ingresos:    data.filter((d) => d.estado === 'Finalizado' && d.tipo !== 'Garantía').reduce((s, d) => s + (d.costoCliente || 0), 0),
+    total:       apiStats.totalRegistros || total,
+    finalizados: apiStats.finalizados,
+    enProceso:   apiStats.enProceso,
+    ingresos:    apiStats.ingresos,
   };
 
   // ── Filtro local ────────────────────────────────────────────────────────────
@@ -590,16 +592,20 @@ export default function ConsultarMantenimientos() {
   const opcionesServicios = catalogo.flatMap((svc) => {
     // precio del servicio puede llamarse precio o valor según el modelo
     const precioSvc = svc.precio || svc.valor || 0;
-    const base = [{ id: svc._id, nombre: svc.nombre, precio: precioSvc, tipo: 'servicio' }];
+    const base = precioSvc > 0
+      ? [{ id: svc._id, nombre: svc.nombre, precio: precioSvc, tipo: 'servicio' }]
+      : [];
     // subservicios vienen del populate('idSupservicios')
     const subsRaw = svc.idSupservicios || svc.subServicios || svc.supServicios || [];
-    const subs = subsRaw.map((sub) => ({
-      id: sub._id,
-      nombre: `↳ ${sub.supnombre || sub.nombre || 'Sub-servicio'}`,
-      precio: sub.supvalor || sub.precio || sub.valor || 0,
-      tipo: 'subservicio',
-      servicioId: svc._id,
-    }));
+    const subs = subsRaw
+      .map((sub) => ({
+        id: sub._id,
+        nombre: `↳ ${sub.supnombre || sub.nombre || 'Sub-servicio'}`,
+        precio: sub.supvalor || sub.precio || sub.valor || 0,
+        tipo: 'subservicio',
+        servicioId: svc._id,
+      }))
+      .filter((sub) => sub.precio > 0);
     return [...base, ...subs];
   });
 
@@ -854,27 +860,68 @@ export default function ConsultarMantenimientos() {
 
                     {/* ── Tarjeta: cliente ENCONTRADO ── */}
                     {clienteEstado === 'encontrado' && clienteInfo && (
-                      <div className="cliente-found" style={{
-                        marginTop: 8, padding: '10px 14px', borderRadius: 10,
-                        background: '#F0FDF4', border: '1.5px solid #A7F3D0',
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <div style={{ width: 34, height: 34, borderRadius: 9, background: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#FFF', flexShrink: 0 }}>
-                            {clienteInfo.nombre?.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase()}
-                          </div>
-                          <div>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: '#065F46' }}>✅ {clienteInfo.nombre}</div>
-                            <div style={{ fontSize: 11, color: '#059669', marginTop: 2, display: 'flex', gap: 10 }}>
-                              {clienteInfo.telefono && <span>📞 {clienteInfo.telefono}</span>}
-                              {clienteInfo.email    && <span>✉️ {clienteInfo.email}</span>}
-                              {clienteInfo.ciudad   && <span>📍 {clienteInfo.ciudad}</span>}
+                      <div className="cliente-found" style={{ marginTop: 8, borderRadius: 10, border: '1.5px solid #A7F3D0', overflow: 'hidden' }}>
+                        {/* Info principal del cliente */}
+                        <div style={{
+                          padding: '10px 14px', background: '#F0FDF4',
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <div style={{ width: 34, height: 34, borderRadius: 9, background: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#FFF', flexShrink: 0 }}>
+                              {clienteInfo.nombre?.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase()}
+                            </div>
+                            <div>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: '#065F46' }}>✅ {clienteInfo.nombre}</div>
+                              <div style={{ fontSize: 11, color: '#059669', marginTop: 2, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                                {clienteInfo.telefono && <span>📞 {clienteInfo.telefono}</span>}
+                                {clienteInfo.email    && <span>✉️ {clienteInfo.email}</span>}
+                                {clienteInfo.ciudad   && <span>📍 {clienteInfo.ciudad}</span>}
+                              </div>
                             </div>
                           </div>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: '#059669', background: '#D1FAE5', padding: '3px 9px', borderRadius: 20, whiteSpace: 'nowrap' }}>
+                            {clienteInfo.tipoDocumento} · {clienteInfo.regimenFiscal}
+                          </div>
                         </div>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: '#059669', background: '#D1FAE5', padding: '3px 9px', borderRadius: 20, whiteSpace: 'nowrap' }}>
-                          {clienteInfo.tipoDocumento} · {clienteInfo.regimenFiscal}
-                        </div>
+
+                        {/* ── Motos del cliente ── */}
+                        {clienteInfo.motos && clienteInfo.motos.length > 0 ? (
+                          <div style={{ padding: '10px 14px', background: '#F8FFFE', borderTop: '1px solid #A7F3D0' }}>
+                            <div style={{ fontSize: 10, fontWeight: 700, color: '#059669', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 7 }}>
+                              🏍️ Motos registradas — selecciona para autocompletar
+                            </div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+                              {clienteInfo.motos.map((moto, idx) => {
+                                const seleccionada = form.placa === moto.placa;
+                                return (
+                                  <button key={idx} type="button"
+                                    onClick={() => {
+                                      upField('placa',    moto.placa);
+                                      upField('vehiculo', moto.vehiculo || '');
+                                    }}
+                                    style={{
+                                      padding: '6px 12px', borderRadius: 8, border: seleccionada ? '2px solid #059669' : '1.5px solid #A7F3D0',
+                                      background: seleccionada ? '#059669' : '#ECFDF5',
+                                      color: seleccionada ? '#FFF' : '#065F46',
+                                      cursor: 'pointer', fontFamily: "'DM Sans',sans-serif",
+                                      display: 'flex', alignItems: 'center', gap: 7, transition: 'all .15s',
+                                    }}
+                                    title={moto.vehiculo || moto.placa}>
+                                    <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 13, letterSpacing: 1 }}>{moto.placa}</span>
+                                    {moto.vehiculo && (
+                                      <span style={{ fontSize: 11, opacity: .85 }}>{moto.vehiculo}</span>
+                                    )}
+                                    {seleccionada && <span style={{ fontSize: 12 }}>✓</span>}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{ padding: '8px 14px', background: '#F8FFFE', borderTop: '1px solid #A7F3D0', fontSize: 11, color: '#059669', fontStyle: 'italic' }}>
+                            🏍️ Este cliente no tiene motos registradas — ingresa la placa manualmente
+                          </div>
+                        )}
                       </div>
                     )}
 

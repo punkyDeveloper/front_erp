@@ -1,42 +1,74 @@
 
+import { useEffect, useState } from 'react';
 import Container from 'react-bootstrap/Container';
-import Nav from 'react-bootstrap/Nav';
-import Navbar from 'react-bootstrap/Navbar';
-import NavDropdown from 'react-bootstrap/NavDropdown';
-import Button from 'react-bootstrap/Button';
+import Nav       from 'react-bootstrap/Nav';
+import Navbar    from 'react-bootstrap/Navbar';
+import Button    from 'react-bootstrap/Button';
 
-function ColorSchemesExample() {
+/* ── Decodifica el JWT y extrae nombre + rol ── */
+const getUsuario = () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) return { nombre: 'Usuario', rol: '' };
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const nombre =
+      payload.nombre ||
+      payload.name   ||
+      payload.email?.split('@')[0] ||
+      'Usuario';
+    const rol =
+      typeof payload.rol === 'string'
+        ? payload.rol
+        : (payload.rol?.nombre || payload.role || '');
+    return { nombre, rol };
+  } catch {
+    return { nombre: 'Usuario', rol: '' };
+  }
+};
+
+/* ── Módulos del POS ── */
+const MODULOS = [
+  { label: 'ERP',    href: '/dashboard' },
+  { label: 'POS',    href: '/Pos'       },
+  { label: 'Ventas', href: '/ventas'    },
+];
+
+export default function NavPos() {
+  const [user, setUser] = useState({ nombre: '', rol: '' });
+
+  useEffect(() => { setUser(getUsuario()); }, []);
+
+  const salir = () => {
+    localStorage.clear();
+    window.location.href = '/';
+  };
+
   return (
-    <>
-      <Navbar bg="dark" expand="lg" data-bs-theme="dark">
-        <Container>
-          <Navbar.Brand href="#home">Tu Tienda</Navbar.Brand>
-          <Navbar.Toggle aria-controls="basic-navbar-nav" />
-          <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="me-auto">
-              <Nav.Link href="/Board">ERP</Nav.Link>
-              <Nav.Link href="/pos">POS</Nav.Link>
-              <Nav.Link href="/Traslados">Traslados</Nav.Link>
-              <Nav.Link href="/egresos">Egresos</Nav.Link>
-              <Nav.Link href="/Pedidos">Pedidos</Nav.Link>
-              <Nav.Link href="/Devolucion">Devolucion</Nav.Link>
-              <NavDropdown title="Cierre" id="navbarScrollingDropdown">
-              <NavDropdown.Item href="/Cierre1">Cierre Tienda</NavDropdown.Item>
-              <NavDropdown.Item href="/Cierre2">Cierre Temporal</NavDropdown.Item>
-            </NavDropdown>
-            </Nav>
-            <Navbar.Text className="m-3">
-              Usuario: <a href="#login">Santi</a>
+    <Navbar bg="dark" expand="lg" data-bs-theme="dark">
+      <Container>
+        <Navbar.Brand href="/Pos" style={{ fontWeight: 700, letterSpacing: '.5px' }}>
+          Tu Tienda · POS
+        </Navbar.Brand>
+        <Navbar.Toggle aria-controls="navpos-collapse" />
+        <Navbar.Collapse id="navpos-collapse">
+          <Nav className="me-auto">
+            {MODULOS.map(m => (
+              <Nav.Link key={m.href} href={m.href}>{m.label}</Nav.Link>
+            ))}
+          </Nav>
+          <Navbar.Text className="mx-2" style={{ fontSize: 14 }}>
+            👤 <strong>{user.nombre}</strong>
+          </Navbar.Text>
+          {user.rol && (
+            <Navbar.Text className="mx-2" style={{ fontSize: 13, color: '#94A3B8' }}>
+              {user.rol}
             </Navbar.Text>
-            <Navbar.Text className="m-3">
-              Rol: <a href="#login">Master</a>
-            </Navbar.Text>
-            <Button variant="outline-danger">Salir</Button>
-          </Navbar.Collapse>
-        </Container>
-      </Navbar>
-    </>
+          )}
+          <Button variant="outline-danger" size="sm" className="ms-2" onClick={salir}>
+            Salir
+          </Button>
+        </Navbar.Collapse>
+      </Container>
+    </Navbar>
   );
 }
-
-export default ColorSchemesExample;

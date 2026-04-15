@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { clearSession } from '../../components/PrivateRoute';
 import { usePermisos } from '../../context/PermissionsContext';
 
 // ─── HOOK: localStorage-synced state ───────────────────────
@@ -356,8 +357,7 @@ const Nav = () => {
   const isOpen = (key) => openMenus[key] || false;
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    clearSession();
     navigate('/');
   };
 
@@ -454,6 +454,15 @@ const Nav = () => {
             </li>
           )}
 
+          {tienePermiso('ver_ventas') && (
+            <li>
+              <NavLink to="/ventas" className={`nav-item ${isActive('/ventas') ? 'active' : ''}`} title="Ventas">
+                <i className="fas fa-receipt nav-icon"></i>
+                <span className="nav-text">Ventas</span>
+              </NavLink>
+            </li>
+          )}
+
           {/* ══════════ Finanzas ══════════ */}
           {(tienePermiso('ver_movimientos') || tienePermiso('ver_libro_contable') || tienePermiso('admin')) && (
             <>
@@ -524,6 +533,12 @@ const Nav = () => {
                   <span className="nav-text">Mecánica</span>
                 </NavLink>
               </li>
+              <li>
+                <NavLink to="/calendario" className={`nav-item ${isActive('/calendario') ? 'active' : ''}`} title="Calendario">
+                  <i className="fas fa-calendar-alt nav-icon"></i>
+                  <span className="nav-text">Calendario</span>
+                </NavLink>
+              </li>
             </>
           )}
 
@@ -541,8 +556,8 @@ const Nav = () => {
                   <ul className="nav-submenu">
                     <li>
                       <NavLink to="/user" className={`nav-item ${isActive('/user') ? 'active' : ''}`}>
-                        <i className="fas fa-user-circle nav-icon"></i>
-                        <span className="nav-text">Mi Perfil</span>
+                        <i className="fas fa-users nav-icon"></i>
+                        <span className="nav-text">Trabajadores</span>
                       </NavLink>
                     </li>
                     {tienePermiso('ver_clientes') && (

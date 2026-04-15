@@ -55,6 +55,7 @@ const VACIO = {
   nombreComercial:"", prefijoDian:"", autorizacionDian:"", fechaVigenciaDian:"",
   resolucionDian:"", rangoInicial:"", rangoFinal:"", consecutivoActual:"",
   correoFactura:"", notasFactura:"",
+  motos: [],
 };
 
 /* ─── Helpers ────────────────────────────────────────────────────────────── */
@@ -127,7 +128,10 @@ const CSS = `
   .ts{background:#0F172A;color:#fff}.td2{background:var(--ro);color:#fff}
   .skeleton{background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:200% 100%;animation:sk 1.2s infinite;border-radius:6px;height:16px}
   @keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
-  @media(max-width:700px){.g2{grid-template-columns:1fr}}
+  .moto-card{display:flex;align-items:center;gap:12px;background:#F8FAFF;border:1px solid var(--bo);border-radius:10px;padding:10px 14px;margin-bottom:8px;transition:background .15s}
+  .moto-card:hover{background:var(--az3)}
+  .moto-add{background:var(--az3);border:1.5px dashed #93C5FD;border-radius:10px;padding:14px;display:grid;grid-template-columns:160px 1fr auto;gap:10px;align-items:flex-end;margin-top:10px}
+  @media(max-width:700px){.g2{grid-template-columns:1fr}.moto-add{grid-template-columns:1fr}}
 `;
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -147,6 +151,8 @@ export default function Clientes() {
   const [err,       setErr]       = useState({});
   const [toast,     setToast]     = useState(null);
   const [cargando,  setCargando]  = useState(false);
+  const [nuevaMotoPlaca, setNuevaMotoPlaca] = useState("");
+  const [nuevaMotoVeh,   setNuevaMotoVeh]   = useState("");
 
   /* ── Cargar permisos desde el API por nombre de rol ── */
   useEffect(() => {
@@ -209,9 +215,16 @@ export default function Clientes() {
 
   const abrir = (tipo, c = null) => {
     setSel(c);
-    setForm(c ? { ...VACIO, ...c, fechaVigenciaDian: c.fechaVigenciaDian ? c.fechaVigenciaDian.slice(0,10) : "" } : VACIO);
+    setForm(c
+      ? { ...VACIO, ...c,
+          fechaVigenciaDian: c.fechaVigenciaDian ? c.fechaVigenciaDian.slice(0,10) : "",
+          motos: c.motos ? c.motos.map(m => ({ ...m })) : [],
+        }
+      : VACIO);
     setErr({});
     setTab("datos");
+    setNuevaMotoPlaca("");
+    setNuevaMotoVeh("");
     setModal(tipo);
   };
 
@@ -459,7 +472,7 @@ export default function Clientes() {
 
           {/* ── MODAL CREAR / EDITAR ── */}
           {(modal === "crear" || modal === "editar") && (
-            <div className="overlay" onClick={cerrar}>
+            <div className="overlay">
               <div className="modal-box" style={{ maxWidth:780 }} onClick={e => e.stopPropagation()}>
                 <div className="mh">
                   <div>
@@ -477,6 +490,11 @@ export default function Clientes() {
                   <div className="tabs">
                     <button className={`tab ${tab==="datos"?"on":""}`}       onClick={() => setTab("datos")}>👤 Datos del Cliente</button>
                     <button className={`tab ${tab==="facturacion"?"on":""}`} onClick={() => setTab("facturacion")}>🧾 Facturación Electrónica</button>
+                    {tienePermiso("ver_mecanica") && (
+                      <button className={`tab ${tab==="motos"?"on":""}`} onClick={() => setTab("motos")}>
+                        🏍️ Motos {form.motos?.length > 0 && <span style={{ background:"var(--az)", color:"#fff", borderRadius:12, fontSize:10, padding:"1px 6px", marginLeft:3 }}>{form.motos.length}</span>}
+                      </button>
+                    )}
                   </div>
 
                   {/* ── TAB DATOS ── */}
@@ -648,6 +666,74 @@ export default function Clientes() {
                       </div>
                     </>
                   )}
+
+                  {/* ── TAB MOTOS ── */}
+                  {tab === "motos" && tienePermiso("ver_mecanica") && (
+                    <>
+                      <div className="sec">
+                        <div className="st">Vehículos / Motos registradas</div>
+
+                        {/* Lista de motos existentes */}
+                        {(!form.motos || form.motos.length === 0) && (
+                          <div style={{ textAlign:"center", padding:"28px 0", color:"var(--gr)" }}>
+                            <div style={{ fontSize:36, marginBottom:8 }}>🏍️</div>
+                            <p style={{ fontSize:14, fontWeight:500 }}>Sin motos registradas</p>
+                            <p style={{ fontSize:12, marginTop:4 }}>Agrega la placa y el vehículo de las motos del cliente</p>
+                          </div>
+                        )}
+
+                        {(form.motos || []).map((moto, idx) => (
+                          <div key={idx} className="moto-card">
+                            <div style={{ width:42, height:42, borderRadius:10, background:"var(--az3)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 }}>🏍️</div>
+                            <div style={{ flex:1, minWidth:0 }}>
+                              <div style={{ fontWeight:700, fontFamily:"monospace", fontSize:15, letterSpacing:1, color:"#1E293B" }}>
+                                {moto.placa || "—"}
+                              </div>
+                              <div style={{ fontSize:12, color:"var(--gr)", marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                                {moto.vehiculo || "Sin referencia"}
+                              </div>
+                            </div>
+                            {modal !== "ver" && (
+                              <button className="bi" title="Eliminar moto"
+                                onClick={() => cf("motos", form.motos.filter((_, i) => i !== idx))}
+                                style={{ color:"var(--ro)", fontSize:18 }}>🗑️</button>
+                            )}
+                          </div>
+                        ))}
+
+                        {/* Formulario para agregar nueva moto */}
+                        {modal !== "ver" && (
+                          <div className="moto-add">
+                            <div className="ig">
+                              <label>Placa *</label>
+                              <input className="ic" placeholder="ABC123"
+                                value={nuevaMotoPlaca}
+                                onChange={e => setNuevaMotoPlaca(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
+                                maxLength={7}
+                                style={{ fontFamily:"monospace", letterSpacing:2, fontWeight:700 }} />
+                            </div>
+                            <div className="ig">
+                              <label>Vehículo (Marca Modelo Año)</label>
+                              <input className="ic" placeholder="Ej: Honda CB125F 2022"
+                                value={nuevaMotoVeh}
+                                onChange={e => setNuevaMotoVeh(e.target.value)} />
+                            </div>
+                            <button className="btn bp" style={{ height:40 }}
+                              onClick={() => {
+                                const placa = nuevaMotoPlaca.trim();
+                                if (!placa) return;
+                                cf("motos", [...(form.motos || []), { placa, vehiculo: nuevaMotoVeh.trim() }]);
+                                setNuevaMotoPlaca("");
+                                setNuevaMotoVeh("");
+                              }}>
+                              + Agregar
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+
                 </div>
 
                 <div className="mf">
@@ -662,7 +748,7 @@ export default function Clientes() {
 
           {/* ── MODAL VER ── */}
           {modal === "ver" && sel && (
-            <div className="overlay" onClick={cerrar}>
+            <div className="overlay">
               <div className="modal-box" style={{ maxWidth:560 }} onClick={e=>e.stopPropagation()}>
                 <div className="mh">
                   <div style={{ display:"flex", gap:14, alignItems:"center" }}>
@@ -694,6 +780,28 @@ export default function Clientes() {
                       <span style={{ fontSize:13, fontWeight:600, color:"#1E293B", textAlign:"right" }}>{r.val || "—"}</span>
                     </div>
                   ))}
+
+                  {/* ── Motos ── */}
+                  {tienePermiso("ver_mecanica") && (
+                    <div style={{ marginTop:14 }}>
+                      <div style={{ fontSize:11, fontWeight:700, color:"#94A3B8", letterSpacing:.8, textTransform:"uppercase", marginBottom:10 }}>🏍️ Motos / Vehículos</div>
+                      {(!sel.motos || sel.motos.length === 0) ? (
+                        <p style={{ fontSize:13, color:"var(--gr)" }}>Sin motos registradas</p>
+                      ) : (
+                        <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                          {sel.motos.map((moto, idx) => (
+                            <div key={idx} className="moto-card" style={{ cursor:"default" }}>
+                              <div style={{ width:36, height:36, borderRadius:9, background:"var(--az3)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:17, flexShrink:0 }}>🏍️</div>
+                              <div style={{ flex:1 }}>
+                                <div style={{ fontWeight:700, fontFamily:"monospace", fontSize:14, letterSpacing:1 }}>{moto.placa}</div>
+                                <div style={{ fontSize:12, color:"var(--gr)" }}>{moto.vehiculo || "—"}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="mf">
                   <button className="btn bs" onClick={cerrar}>Cerrar</button>
@@ -707,7 +815,7 @@ export default function Clientes() {
 
           {/* ── MODAL ELIMINAR ── */}
           {modal === "eliminar" && sel && (
-            <div className="overlay" onClick={cerrar}>
+            <div className="overlay">
               <div className="modal-box" style={{ maxWidth:420 }} onClick={e=>e.stopPropagation()}>
                 <div className="mh">
                   <h2 style={{ fontSize:17, fontWeight:700, color:"var(--ro)" }}>🗑️ Eliminar Cliente</h2>
