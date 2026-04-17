@@ -423,7 +423,7 @@ function UpdateUser({ userId, usuario, onUpdated }) {
       </button>
 
       {show && (
-        <div className="upd-overlay" onClick={(e) => e.target === e.currentTarget && handleClose()}>
+        <div className="upd-overlay">
           <div className="upd-modal">
             <div className="upd-modal-header">
               <h3><i className="fas fa-user-pen"></i> Editar Trabajador</h3>

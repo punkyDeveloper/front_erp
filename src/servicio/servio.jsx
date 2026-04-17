@@ -853,8 +853,8 @@ const handleSaveService = async () => {
       </div>
 
       {showModal && (
-        <div className="modal-overlay" onClick={handleCloseModal}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
+        <div className="modal-overlay">
+          <div className="modal-content">
             <div className="modal-header">
               <h2 className="modal-title">
                 {editingService ? 'Editar Servicio' : 'Nuevo Servicio'}
@@ -1064,8 +1064,8 @@ const handleSaveService = async () => {
       )}
 
       {showConfirmDialog && (
-        <div className="modal-overlay" onClick={cancelDelete}>
-          <div className="confirm-dialog" onClick={e => e.stopPropagation()}>
+        <div className="modal-overlay">
+          <div className="confirm-dialog">
             <h3 className="confirm-title">Confirmar Eliminación</h3>
             <p className="confirm-text">
               ¿Estás seguro de que deseas eliminar este servicio? Esta acción no se puede deshacer.

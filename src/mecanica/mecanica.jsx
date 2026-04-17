@@ -846,8 +846,8 @@ export default function ConsultarMantenimientos() {
 
           {/* ══ MODAL CREAR / EDITAR ════════════════════════════════════════ */}
           {modalOpen && (
-            <div style={{ ...S.overlay, animation: 'fadeIn 0.2s ease' }} onClick={() => setModalOpen(false)}>
-              <div style={{ ...S.modal, animation: 'slideUp 0.25s ease' }} className="form-modal" onClick={(e) => e.stopPropagation()}>
+            <div style={{ ...S.overlay, animation: 'fadeIn 0.2s ease' }}>
+              <div style={{ ...S.modal, animation: 'slideUp 0.25s ease' }} className="form-modal">
                 <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 24, color: '#1A1A2E' }}>
                   {editingId ? '✏️ Editar Mantenimiento' : '+ Nuevo Mantenimiento'}
                 </h2>
@@ -1328,8 +1328,8 @@ export default function ConsultarMantenimientos() {
 
           {/* ══ CONFIRM ELIMINAR ════════════════════════════════════════════ */}
           {deleteTarget && (
-            <div style={{ ...S.overlay, animation: 'fadeIn 0.2s ease' }} onClick={() => setDelTarget(null)}>
-              <div style={{ ...S.deleteModal, animation: 'slideUp 0.25s ease' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ ...S.overlay, animation: 'fadeIn 0.2s ease' }}>
+              <div style={{ ...S.deleteModal, animation: 'slideUp 0.25s ease' }}>
                 <div style={{ fontSize: 44, marginBottom: 14 }}>🗑️</div>
                 <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 6, color: '#1A1A2E' }}>¿Eliminar registro?</h3>
                 <p style={{ fontSize: 13, color: '#6B7280', marginBottom: 6 }}>

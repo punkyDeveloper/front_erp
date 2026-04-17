@@ -627,7 +627,7 @@ export default function Productos() {
 
       {/* ── Modal CREAR ── */}
       {modal === "crear" && createPortal(
-        <div className="overlay" onClick={(e) => e.target === e.currentTarget && cerrar()}>
+        <div className="overlay">
           <div className="modal-box">
             <div className="mh">
               <div>
@@ -650,7 +650,7 @@ export default function Productos() {
 
       {/* ── Modal EDITAR ── */}
       {modal === "editar" && createPortal(
-        <div className="overlay" onClick={(e) => e.target === e.currentTarget && cerrar()}>
+        <div className="overlay">
           <div className="modal-box">
             <div className="mh">
               <div>
@@ -673,7 +673,7 @@ export default function Productos() {
 
       {/* ── Modal ELIMINAR ── */}
       {modal === "eliminar" && createPortal(
-        <div className="overlay" onClick={(e) => e.target === e.currentTarget && cerrar()}>
+        <div className="overlay">
           <div className="modal-box sm">
             <div className="mh">
               <h2 style={{ fontSize: 18, fontWeight: 700, color: "#0F172A" }}>Eliminar producto</h2>

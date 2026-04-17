@@ -437,8 +437,8 @@ function ModalDetalle({ item, onClose }) {
   const tipoColor = TIPO_COLORS[item.tipo] || "#6B7280";
 
   return (
-    <div className="cal-overlay" onClick={onClose}>
-      <div className="cal-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="cal-overlay">
+      <div className="cal-modal">
         <div className="cal-modal-header">
           <div style={{ flex: 1 }}>
             <span
@@ -558,8 +558,8 @@ function ModalMas({ items, fecha, onClose, onSelect }) {
   const d = new Date(fecha + "T00:00:00");
   const label = d.toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
   return (
-    <div className="cal-overlay" onClick={onClose}>
-      <div className="cal-more-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="cal-overlay">
+      <div className="cal-more-modal">
         <div className="cal-more-title">
           <span style={{ textTransform: "capitalize" }}>{label}</span>
           <button className="cal-modal-close" onClick={onClose}>×</button>

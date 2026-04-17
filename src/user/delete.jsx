@@ -155,7 +155,7 @@ function DeleteUser({ userId, usuario, onUpdated }) {
       </button>
 
       {show && (
-        <div className="del-overlay" onClick={(e) => e.target === e.currentTarget && setShow(false)}>
+        <div className="del-overlay">
           <div className="del-modal">
             <div className="del-modal-icon">
               <div className="del-icon-circle"><i className="fas fa-trash"></i></div>

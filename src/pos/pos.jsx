@@ -611,7 +611,7 @@ ${facturaData.notas ? `<p style="margin-top:12px;font-size:11px;color:#666">Nota
 
       {/* Modal confirmar eliminar borrador */}
       {modalEliminar && createPortal(
-        <div className="overlay" onClick={(e) => e.target === e.currentTarget && setModalEliminar(null)}>
+        <div className="overlay">
           <div className="modal-box">
             <div className="mh">
               <h2 style={{ fontSize: 17, fontWeight: 700 }}>Eliminar borrador</h2>
@@ -882,7 +882,7 @@ ${facturaData.notas ? `<p style="margin-top:12px;font-size:11px;color:#666">Nota
 
       {/* ── Modal confirmar pago ── */}
       {modalPago && createPortal(
-        <div className="overlay" onClick={(e) => e.target === e.currentTarget && !guardando && setModalPago(false)}>
+        <div className="overlay">
           <div className="modal-box">
             <div className="mh">
               <h2 style={{ fontSize: 17, fontWeight: 700 }}>Confirmar venta</h2>
@@ -932,7 +932,7 @@ ${facturaData.notas ? `<p style="margin-top:12px;font-size:11px;color:#666">Nota
 
       {/* ── Modal confirmar volver ── */}
       {modalCancelar && createPortal(
-        <div className="overlay" onClick={(e) => e.target === e.currentTarget && setModalCancelar(false)}>
+        <div className="overlay">
           <div className="modal-box">
             <div className="mh">
               <h2 style={{ fontSize: 17, fontWeight: 700 }}>¿Salir del terminal?</h2>
@@ -963,7 +963,7 @@ ${facturaData.notas ? `<p style="margin-top:12px;font-size:11px;color:#666">Nota
 
       {/* ── Modal nuevo cliente rápido ── */}
       {modalNuevoCliente && createPortal(
-        <div className="overlay" onClick={(e) => e.target === e.currentTarget && !guardandoCliente && setModalNuevoCliente(false)}>
+        <div className="overlay">
           <div className="modal-box">
             <div className="mh">
               <h2 style={{ fontSize:17, fontWeight:700 }}>Nuevo cliente</h2>

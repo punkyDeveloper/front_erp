@@ -402,7 +402,7 @@ ${v.notas ? `<p style="margin-top:12px;font-size:11px;color:#666">Notas: ${v.not
 
       {/* ── Modal factura ── */}
       {facturaVenta && createPortal(
-        <div className="overlay" onClick={e => e.target === e.currentTarget && setFacturaVenta(null)}>
+        <div className="overlay">
           <div className="modal-box">
             <div className="mh">
               <h2 style={{ fontSize:17, fontWeight:700 }}>🧾 Factura</h2>

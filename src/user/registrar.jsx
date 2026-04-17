@@ -308,7 +308,7 @@ function RegistrarTrabajador({ onCreated }) {
 
       {/* Modal de Registro */}
       {show && (
-        <div className="reg-overlay" onClick={(e) => e.target === e.currentTarget && setShow(false)}>
+        <div className="reg-overlay">
           <div className="reg-modal">
             <div className="reg-modal-header">
               <h3><i className="fas fa-user-plus"></i> Registrar Trabajador</h3>
@@ -397,7 +397,7 @@ function RegistrarTrabajador({ onCreated }) {
 
       {/* Modal de éxito */}
       {showSuccess && (
-        <div className="reg-overlay" onClick={(e) => e.target === e.currentTarget && setShowSuccess(false)}>
+        <div className="reg-overlay">
           <div className="success-modal">
             <div className="success-icon"><i className="fas fa-check"></i></div>
             <h3>Trabajador Registrado</h3>
