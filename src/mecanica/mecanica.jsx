@@ -41,6 +41,16 @@ const tipoIcon = (tipo) => {
 const escHtml = (str) =>
   String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 
+// ─── FORMATO NUMÉRICO PARA INPUTS (puntos de miles, estilo colombiano) ────────
+// fmtNum("50000") → "50.000"   fmtNum("") → ""
+const fmtNum = (val) => {
+  const n = String(val ?? '').replace(/\D/g, '');
+  if (!n) return '';
+  return Number(n).toLocaleString('es-CO');
+};
+// parseNum("50.000") → "50000"
+const parseNum = (val) => String(val ?? '').replace(/\./g, '').replace(/[^0-9]/g, '');
+
 // ─── GENERADOR DE FACTURA (HTML local) ───────────────────────────────────────
 const generarFactura = (item) => {
   const fechaDoc    = new Date(item.fecha).toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -54,13 +64,13 @@ const generarFactura = (item) => {
   ).join('');
 
   const pRows = (item.productos || []).map((p) =>
-    `<tr><td style="padding:10px 8px;border-bottom:1px solid #F0F0F5;font-size:13px;">📦 ${escHtml(p.nombre)}</td>
+    `<tr><td style="padding:10px 8px;border-bottom:1px solid #F0F0F5;font-size:13px;">📦 ${escHtml(p.nombre)}${(p.cantidad > 1) ? ` <span style="font-size:11px;color:#7C3AED;">(×${p.cantidad})</span>` : ''}</td>
      <td style="padding:10px 8px;border-bottom:1px solid #F0F0F5;text-align:center;font-size:12px;color:#7C3AED;font-weight:600;">Repuesto</td>
-     <td style="padding:10px 8px;border-bottom:1px solid #F0F0F5;text-align:right;font-weight:600;font-size:13px;">${fmt(p.precioVenta)}</td></tr>`
+     <td style="padding:10px 8px;border-bottom:1px solid #F0F0F5;text-align:right;font-weight:600;font-size:13px;">${fmt((p.precioVenta || 0) * (p.cantidad || 1))}</td></tr>`
   ).join('');
 
   const stServ = (item.servicios || []).reduce((s, x) => s + (x.precio || 0), 0);
-  const stProd = (item.productos || []).reduce((s, p) => s + (p.precioVenta || 0), 0);
+  const stProd = (item.productos || []).reduce((s, p) => s + ((p.precioVenta || 0) * (p.cantidad || 1)), 0);
   const iva    = Math.round((stServ + stProd) * 0.19);
 
   const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/><title>Factura ${escHtml(num)}</title>
@@ -131,11 +141,11 @@ const generarOrden = (item) => {
     `<tr><td style="padding:12px 10px;border-bottom:1px solid #F0F0F5;font-size:13px;">
        <div style="display:flex;align-items:center;gap:8px;">
          <div style="width:20px;height:20px;border-radius:50%;background:#F3E8FF;color:#7C3AED;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;">P</div>
-         📦 ${escHtml(p.nombre)}
+         📦 ${escHtml(p.nombre)}${(p.cantidad > 1) ? ` <span style="font-size:11px;color:#7C3AED;">(×${p.cantidad})</span>` : ''}
        </div></td>
      <td style="padding:12px 10px;border-bottom:1px solid #F0F0F5;font-size:11px;color:#059669;font-weight:600;text-align:center;">Repuesto</td>
      <td style="padding:12px 10px;border-bottom:1px solid #F0F0F5;text-align:center;"><div style="width:18px;height:18px;border:2px solid #D1D5DB;border-radius:4px;display:inline-block;"></div></td>
-     <td style="padding:12px 10px;border-bottom:1px solid #F0F0F5;text-align:right;font-weight:600;font-size:13px;">${fmt(p.precioVenta)}</td></tr>`
+     <td style="padding:12px 10px;border-bottom:1px solid #F0F0F5;text-align:right;font-weight:600;font-size:13px;">${fmt((p.precioVenta || 0) * (p.cantidad || 1))}</td></tr>`
   ).join('');
 
   const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/><title>Orden ${escHtml(num)}</title>
@@ -286,6 +296,7 @@ export default function ConsultarMantenimientos() {
   const [rowsPerPage, setRpp]         = useState(20);
   const [total, setTotal]             = useState(0);
   const [apiStats, setApiStats]       = useState({ totalRegistros: 0, finalizados: 0, enProceso: 0, ingresos: 0 });
+  const [svcSearch, setSvcSearch]     = useState('');
 
   // ── Permisos ───────────────────────────────────────────────────────────────
   const [permisos, setPermisos] = useState(() => {
@@ -329,10 +340,10 @@ export default function ConsultarMantenimientos() {
   // ── Totales del formulario ──────────────────────────────────────────────────
   const costoCalculado =
     form.servicios.reduce((s, x) => s + (Number(x.precio) || 0), 0) +
-    form.productos.reduce((s, p) => s + (Number(p.precioVenta) || 0), 0);
+    form.productos.reduce((s, p) => s + ((Number(p.precioVenta) || 0) * (Number(p.cantidad) || 1)), 0);
 
   const gananciasCalculadas = form.productos.reduce(
-    (s, p) => s + ((Number(p.precioVenta) || 0) - (Number(p.costo) || 0)), 0,
+    (s, p) => s + (((Number(p.precioVenta) || 0) - (Number(p.costo) || 0)) * (Number(p.cantidad) || 1)), 0,
   );
 
   // ── Fetch mantenimientos ────────────────────────────────────────────────────
@@ -428,6 +439,7 @@ export default function ConsultarMantenimientos() {
         telefono:        form.telefonoCliente || '',
         ciudad:          form.ciudadCliente || '',
         activo:          true,
+        ...(form.placa ? { motos: [{ placa: form.placa.toUpperCase(), vehiculo: form.vehiculo || '' }] } : {}),
       };
       const r = await fetch(`${API_URL}/clientes`, {
         method: 'POST', headers: authHeaders(), body: JSON.stringify(body),
@@ -493,6 +505,7 @@ export default function ConsultarMantenimientos() {
     setClienteInfo(null);
     setClienteEstado('idle');
     setCreandoCliente(false);
+    setSvcSearch('');
     setModalOpen(true);
   };
 
@@ -508,8 +521,8 @@ export default function ConsultarMantenimientos() {
       fecha:                (item.fecha || '').split('T')[0] || new Date().toISOString().split('T')[0],
       estado:               item.estado || 'Pendiente',
       taller:               item.taller || '',
-      servicios:            (item.servicios || []).map((s) => ({ ...s })),
-      productos:            (item.productos || []).map((p) => ({ ...p })),
+      servicios:            (item.servicios || []).map((s) => ({ ...s, precio: String(s.precio ?? '') })),
+      productos:            (item.productos || []).map((p) => ({ ...p, precioVenta: String(p.precioVenta ?? ''), costo: String(p.costo ?? ''), cantidad: p.cantidad || 1 })),
       clienteId:            item.clienteId || '',
       nombreCliente:        item.nombreCliente || '',
       emailCliente:         item.emailCliente || '',
@@ -520,6 +533,7 @@ export default function ConsultarMantenimientos() {
     // Al editar también buscar el cliente
     setClienteInfo(null);
     setClienteEstado('idle');
+    setSvcSearch('');
     if (item.cedula && item.cedula.length >= 6) {
       setClienteEstado('buscando');
       buscarCliente(item.cedula);
@@ -535,8 +549,12 @@ export default function ConsultarMantenimientos() {
         ...form,
         kilometraje: Number(form.kilometraje) || 0,
         // No enviar productos ni servicios con nombre vacío
-        productos: (form.productos || []).filter(p => p.nombre && p.nombre.trim()),
-        servicios: (form.servicios || []).filter(s => s.nombre && s.nombre.trim()),
+        productos: (form.productos || [])
+          .filter(p => p.nombre && p.nombre.trim())
+          .map(p => ({ ...p, precioVenta: Number(p.precioVenta) || 0, costo: Number(p.costo) || 0, cantidad: Number(p.cantidad) || 1 })),
+        servicios: (form.servicios || [])
+          .filter(s => s.nombre && s.nombre.trim())
+          .map(s => ({ ...s, precio: Number(s.precio) || 0 })),
       };
       const url    = editingId ? `${API_URL}/mecanica/${editingId}` : `${API_URL}/mecanica`;
       const method = editingId ? 'PUT' : 'POST';
@@ -592,14 +610,16 @@ export default function ConsultarMantenimientos() {
   const opcionesServicios = catalogo.flatMap((svc) => {
     // precio del servicio puede llamarse precio o valor según el modelo
     const precioSvc = svc.precio || svc.valor || 0;
+    const codigoSvc = svc.codigo || svc.code || String(svc._id || '').slice(-6).toUpperCase();
     const base = precioSvc > 0
-      ? [{ id: svc._id, nombre: svc.nombre, precio: precioSvc, tipo: 'servicio' }]
+      ? [{ id: svc._id, codigo: codigoSvc, nombre: svc.nombre, precio: precioSvc, tipo: 'servicio' }]
       : [];
     // subservicios vienen del populate('idSupservicios')
     const subsRaw = svc.idSupservicios || svc.subServicios || svc.supServicios || [];
     const subs = subsRaw
       .map((sub) => ({
         id: sub._id,
+        codigo: sub.codigo || sub.code || String(sub._id || '').slice(-6).toUpperCase(),
         nombre: `↳ ${sub.supnombre || sub.nombre || 'Sub-servicio'}`,
         precio: sub.supvalor || sub.precio || sub.valor || 0,
         tipo: 'subservicio',
@@ -622,7 +642,7 @@ export default function ConsultarMantenimientos() {
   };
 
   const updServicioPrecio = (nombre, p) =>
-    upField('servicios', form.servicios.map((s) => s.nombre === nombre ? { ...s, precio: Number(p) || 0 } : s));
+    upField('servicios', form.servicios.map((s) => s.nombre === nombre ? { ...s, precio: p } : s));
 
   // ── Paginación ──────────────────────────────────────────────────────────────
   const totalPgs  = Math.max(1, Math.ceil(total / rowsPerPage));
@@ -970,6 +990,18 @@ export default function ConsultarMantenimientos() {
                               placeholder="Medellín" value={form.ciudadCliente}
                               onChange={(e) => upField('ciudadCliente', e.target.value)} />
                           </div>
+                          <div style={S.fGroup}>
+                            <label style={{ ...S.fLabel, color: '#B45309' }}>Placa del vehículo</label>
+                            <input style={{ ...S.fInput, borderColor: '#FDE68A', fontFamily: 'monospace', letterSpacing: 2 }}
+                              placeholder="ABC-123" maxLength={7} value={form.placa}
+                              onChange={(e) => upField('placa', e.target.value.toUpperCase())} />
+                          </div>
+                          <div style={S.fGroup}>
+                            <label style={{ ...S.fLabel, color: '#B45309' }}>Vehículo (marca/modelo)</label>
+                            <input style={{ ...S.fInput, borderColor: '#FDE68A' }}
+                              placeholder="Ej: Honda CB125F 2022" value={form.vehiculo}
+                              onChange={(e) => upField('vehiculo', e.target.value)} />
+                          </div>
                           {/* Botón crear cliente */}
                           {form.nombreCliente.trim().length > 2 && (
                             <div style={{ gridColumn: '1 / -1' }}>
@@ -1048,8 +1080,9 @@ export default function ConsultarMantenimientos() {
                   {/* Kilometraje */}
                   <div style={S.fGroup}>
                     <label style={S.fLabel}>Kilometraje</label>
-                    <input style={S.fInput} type="number" placeholder="0" value={form.kilometraje}
-                      onChange={(e) => upField('kilometraje', e.target.value)} />
+                    <input style={S.fInput} type="text" inputMode="numeric" placeholder="0"
+                      value={fmtNum(form.kilometraje)}
+                      onChange={(e) => upField('kilometraje', parseNum(e.target.value))} />
                   </div>
                   {/* Fecha */}
                   <div style={S.fGroup}>
@@ -1070,19 +1103,47 @@ export default function ConsultarMantenimientos() {
                       🔧 Servicios realizados
                       {catalogo.length === 0 && <span style={{ marginLeft: 8, fontSize: 10, color: '#9CA3AF', fontWeight: 400, textTransform: 'none' }}>(cargando catálogo...)</span>}
                     </label>
+                    {/* Buscador de servicios */}
+                    <div style={{ display: 'flex', alignItems: 'center', background: '#FFF', border: '1px solid #E8E8ED', borderRadius: 8, padding: '7px 10px', gap: 7, marginBottom: 6 }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                      <input
+                        style={{ border: 'none', outline: 'none', fontSize: 12, color: '#1A1A2E', background: 'transparent', width: '100%', fontFamily: "'DM Sans', sans-serif" }}
+                        placeholder="Buscar por nombre o código..."
+                        value={svcSearch}
+                        onChange={(e) => setSvcSearch(e.target.value)}
+                      />
+                      {svcSearch && <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', fontSize: 13 }} onClick={() => setSvcSearch('')}>✕</button>}
+                    </div>
                     <div style={S.svcList}>
-                      {opcionesServicios.length > 0 ? opcionesServicios.map((opc) => {
-                        const sel = !!form.servicios.find((s) => s.nombre === opc.nombre);
-                        return (
-                          <div key={opc.id || opc.nombre} style={S.svcOpt(sel)} onClick={() => toggleServicio(opc)}>
-                            <div style={S.chk(sel)}>{sel ? '✓' : ''}</div>
-                            <span style={{ flex: 1 }}>{opc.nombre}</span>
-                            <span style={{ fontSize: 11, color: sel ? '#4338CA' : '#9CA3AF', fontWeight: 600 }}>{fmt(opc.precio)}</span>
-                          </div>
-                        );
-                      }) : (
+                      {opcionesServicios.length > 0 ? opcionesServicios
+                        .filter((opc) => {
+                          if (!svcSearch) return true;
+                          const q = svcSearch.toLowerCase();
+                          return opc.nombre.toLowerCase().includes(q) || (opc.codigo && opc.codigo.toLowerCase().includes(q));
+                        })
+                        .map((opc) => {
+                          const sel = !!form.servicios.find((s) => s.nombre === opc.nombre);
+                          return (
+                            <div key={opc.id || opc.nombre} style={S.svcOpt(sel)} onClick={() => toggleServicio(opc)}>
+                              <div style={S.chk(sel)}>{sel ? '✓' : ''}</div>
+                              {opc.codigo && (
+                                <span style={{ fontSize: 10, fontFamily: 'monospace', fontWeight: 700, color: sel ? '#4338CA' : '#9CA3AF', background: sel ? '#EEF2FF' : '#F3F4F6', padding: '1px 5px', borderRadius: 4, flexShrink: 0 }}>{opc.codigo}</span>
+                              )}
+                              <span style={{ flex: 1 }}>{opc.nombre}</span>
+                              <span style={{ fontSize: 11, color: sel ? '#4338CA' : '#9CA3AF', fontWeight: 600 }}>{fmt(opc.precio)}</span>
+                            </div>
+                          );
+                        }) : (
                         <div style={{ padding: '12px', color: '#9CA3AF', fontSize: 12, textAlign: 'center' }}>
                           Sin servicios en el catálogo. Agrégalos desde el módulo de categorías.
+                        </div>
+                      )}
+                      {opcionesServicios.length > 0 && svcSearch && opcionesServicios.filter((opc) => {
+                        const q = svcSearch.toLowerCase();
+                        return opc.nombre.toLowerCase().includes(q) || (opc.codigo && opc.codigo.toLowerCase().includes(q));
+                      }).length === 0 && (
+                        <div style={{ padding: '12px', color: '#9CA3AF', fontSize: 12, textAlign: 'center' }}>
+                          Sin resultados para "{svcSearch}"
                         </div>
                       )}
                     </div>
@@ -1094,9 +1155,9 @@ export default function ConsultarMantenimientos() {
                             <span style={{ fontSize: 12, fontWeight: 600, color: '#1A1A2E', flex: 1 }}>{s.nombre}</span>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                               <span style={{ fontSize: 11, color: '#9CA3AF' }}>COP</span>
-                              <input type="number" min="0" value={s.precio}
-                                style={{ width: 100, padding: '5px 8px', borderRadius: 7, border: '1px solid #E8E8ED', fontSize: 12, fontWeight: 600, fontFamily: "'DM Sans',sans-serif", outline: 'none', textAlign: 'right', background: '#FAFAFC' }}
-                                onChange={(e) => updServicioPrecio(s.nombre, e.target.value)}
+                              <input type="text" inputMode="numeric" value={fmtNum(s.precio)}
+                                style={{ width: 110, padding: '5px 8px', borderRadius: 7, border: '1px solid #E8E8ED', fontSize: 12, fontWeight: 600, fontFamily: "'DM Sans',sans-serif", outline: 'none', textAlign: 'right', background: '#FAFAFC' }}
+                                onChange={(e) => updServicioPrecio(s.nombre, parseNum(e.target.value))}
                                 onClick={(e) => e.stopPropagation()} />
                               <button style={{ background: 'none', border: 'none', color: '#9CA3AF', cursor: 'pointer', fontSize: 14 }}
                                 onClick={() => upField('servicios', form.servicios.filter((x) => x.nombre !== s.nombre))}>✕</button>
@@ -1129,27 +1190,36 @@ export default function ConsultarMantenimientos() {
                           <button style={{ background: 'none', border: 'none', color: '#DC2626', cursor: 'pointer', fontSize: 16 }}
                             onClick={() => upField('productos', form.productos.filter((_, i) => i !== idx))}>✕</button>
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
                           <div style={S.fGroup}>
-                            <label style={{ ...S.fLabel, color: '#2563EB' }}>Precio cliente (COP)</label>
+                            <label style={{ ...S.fLabel, color: '#059669' }}>Cantidad</label>
+                            <input style={{ ...S.fInput, fontSize: 12, padding: '6px 9px', borderColor: '#A7F3D0', background: '#F0FDF4' }}
+                              type="number" min="1" placeholder="1" value={p.cantidad ?? 1}
+                              onChange={(e) => { const u = [...form.productos]; u[idx] = { ...u[idx], cantidad: e.target.value }; upField('productos', u); }} />
+                          </div>
+                          <div style={S.fGroup}>
+                            <label style={{ ...S.fLabel, color: '#2563EB' }}>Precio unitario (COP)</label>
                             <input style={{ ...S.fInput, fontSize: 12, padding: '6px 9px', borderColor: '#BFDBFE', background: '#EFF6FF' }}
-                              type="number" min="0" placeholder="0" value={p.precioVenta}
-                              onChange={(e) => { const u = [...form.productos]; u[idx] = { ...u[idx], precioVenta: Number(e.target.value) || 0 }; upField('productos', u); }} />
+                              type="text" inputMode="numeric" placeholder="0"
+                              value={fmtNum(p.precioVenta)}
+                              onChange={(e) => { const u = [...form.productos]; u[idx] = { ...u[idx], precioVenta: parseNum(e.target.value) }; upField('productos', u); }} />
                           </div>
                           <div style={S.fGroup}>
                             <label style={{ ...S.fLabel, color: '#7C3AED' }}>🔒 Mi costo real (COP)</label>
                             <input style={{ ...S.fInput, fontSize: 12, padding: '6px 9px', borderColor: '#DDD6FE', background: '#F5F3FF' }}
-                              type="number" min="0" placeholder="0" value={p.costo}
-                              onChange={(e) => { const u = [...form.productos]; u[idx] = { ...u[idx], costo: Number(e.target.value) || 0 }; upField('productos', u); }} />
+                              type="text" inputMode="numeric" placeholder="0"
+                              value={fmtNum(p.costo)}
+                              onChange={(e) => { const u = [...form.productos]; u[idx] = { ...u[idx], costo: parseNum(e.target.value) }; upField('productos', u); }} />
                           </div>
                         </div>
-                        {(p.precioVenta > 0 || p.costo > 0) && (
-                          <div style={{ marginTop: 6, padding: '5px 9px', borderRadius: 7, background: (p.precioVenta - p.costo) >= 0 ? '#F0FDF4' : '#FEF2F2', border: `1px solid ${(p.precioVenta - p.costo) >= 0 ? '#D1FAE5' : '#FECACA'}`, display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ fontSize: 10, fontWeight: 700, color: (p.precioVenta - p.costo) >= 0 ? '#059669' : '#DC2626', textTransform: 'uppercase' }}>
-                              {(p.precioVenta - p.costo) >= 0 ? '📈 Ganancia' : '📉 Pérdida'}
+                        {(Number(p.precioVenta) > 0 || Number(p.costo) > 0) && (
+                          <div style={{ marginTop: 6, padding: '5px 9px', borderRadius: 7, background: ((Number(p.precioVenta)||0) - (Number(p.costo)||0)) >= 0 ? '#F0FDF4' : '#FEF2F2', border: `1px solid ${((Number(p.precioVenta)||0) - (Number(p.costo)||0)) >= 0 ? '#D1FAE5' : '#FECACA'}`, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4 }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, color: ((Number(p.precioVenta)||0) - (Number(p.costo)||0)) >= 0 ? '#059669' : '#DC2626', textTransform: 'uppercase' }}>
+                              {((Number(p.precioVenta)||0) - (Number(p.costo)||0)) >= 0 ? '📈 Ganancia' : '📉 Pérdida'}
+                              {Number(p.cantidad) > 1 && <span style={{ marginLeft: 4, fontWeight: 400, textTransform: 'none' }}>× {Number(p.cantidad) || 1} = total</span>}
                             </span>
-                            <span style={{ fontSize: 13, fontWeight: 700, color: (p.precioVenta - p.costo) >= 0 ? '#059669' : '#DC2626' }}>
-                              {fmt(p.precioVenta - p.costo)}
+                            <span style={{ fontSize: 13, fontWeight: 700, color: ((Number(p.precioVenta)||0) - (Number(p.costo)||0)) >= 0 ? '#059669' : '#DC2626' }}>
+                              {fmt(((Number(p.precioVenta)||0) - (Number(p.costo)||0)) * (Number(p.cantidad)||1))}
                             </span>
                           </div>
                         )}
@@ -1158,7 +1228,7 @@ export default function ConsultarMantenimientos() {
                     <button style={{ width: '100%', padding: '9px', borderRadius: 9, border: '1.5px dashed #D1D5DB', background: '#FAFAFC', color: '#6B7280', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}
                       onMouseOver={(e) => { e.currentTarget.style.borderColor = '#1A1A2E'; e.currentTarget.style.color = '#1A1A2E'; }}
                       onMouseOut={(e) => { e.currentTarget.style.borderColor = '#D1D5DB'; e.currentTarget.style.color = '#6B7280'; }}
-                      onClick={() => upField('productos', [...form.productos, { nombre: '', precioVenta: 0, costo: 0 }])}>
+                      onClick={() => upField('productos', [...form.productos, { nombre: '', precioVenta: '', costo: '', cantidad: 1 }])}>
                       + Agregar producto / repuesto
                     </button>
                   </div>
@@ -1212,8 +1282,12 @@ export default function ConsultarMantenimientos() {
                               const bodyEdit = {
                                 ...form,
                                 kilometraje: Number(form.kilometraje) || 0,
-                                productos: (form.productos || []).filter(p => p.nombre && p.nombre.trim()),
-                                servicios: (form.servicios || []).filter(s => s.nombre && s.nombre.trim()),
+                                productos: (form.productos || [])
+                                  .filter(p => p.nombre && p.nombre.trim())
+                                  .map(p => ({ ...p, precioVenta: Number(p.precioVenta) || 0, costo: Number(p.costo) || 0, cantidad: Number(p.cantidad) || 1 })),
+                                servicios: (form.servicios || [])
+                                  .filter(s => s.nombre && s.nombre.trim())
+                                  .map(s => ({ ...s, precio: Number(s.precio) || 0 })),
                               };
                               const rEdit = await fetch(`${API_URL}/mecanica/${editingId}`, {
                                 method: 'PUT', headers: authHeaders(), body: JSON.stringify(bodyEdit),

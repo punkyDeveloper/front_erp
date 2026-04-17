@@ -1,6 +1,8 @@
 {
   "permissions": {
     "allow": [
+      "mcp__claude_ai_Google_Calendar__authenticate",
+      "mcp__claude_ai_Google_Calendar__complete_authentication",
       "Bash(git -C \"C:/Users/elsan/OneDrive/Escritorio/back_erp\" log --oneline -20)",
       "Bash(git -C \"C:/Users/elsan/OneDrive/Escritorio/back-erp\" log --oneline -20)",
       "Bash(git -C \"C:/Users/elsan/OneDrive/Escritorio/back_erp\" show d8c2224 --stat)",
@@ -8,7 +10,9 @@
       "Read(//c/Users/elsan/OneDrive/Escritorio/back_erp/src/controllers/mecanica/**)",
       "Read(//c/Users/elsan/OneDrive/Escritorio/back_erp/src/routers/**)",
       "Read(//c/Users/elsan/OneDrive/Escritorio/back_erp/src/moduls/**)",
-      "Read(//c/Users/elsan/OneDrive/Escritorio/back_erp/**)"
+      "Read(//c/Users/elsan/OneDrive/Escritorio/back_erp/**)",
+      "Bash(find c:\\\\\\\\Users\\\\\\\\elsan\\\\\\\\OneDrive\\\\\\\\Escritorio\\\\\\\\front_erp\\\\\\\\src -type d -name mecanica)",
+      "Bash(find c:\\\\\\\\Users\\\\\\\\elsan\\\\\\\\OneDrive\\\\\\\\Escritorio\\\\\\\\front_erp\\\\\\\\src -type f -name \"*.jsx\" -o -type f -name \"*.js\")"
     ],
     "additionalDirectories": [
       "c:\\Users\\elsan\\OneDrive\\Escritorio\\back_erp",
