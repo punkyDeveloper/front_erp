@@ -1,4 +1,5 @@
 import { Navigate } from 'react-router-dom';
+import { usePermisos } from '../context/PermissionsContext';
 
 /**
  * Limpia todos los datos de sesión del localStorage.
@@ -22,15 +23,21 @@ const isTokenExpired = (token) => {
 };
 
 /**
- * Protege rutas que requieren autenticación.
- * Si no hay token o está vencido, limpia el localStorage y redirige al login (/).
+ * Protege rutas que requieren autenticación y opcionalmente un permiso específico.
+ * Si no hay token o está vencido, redirige al login (/).
+ * Si se pasa `permission` y el usuario no lo tiene, redirige a /bienvenida.
  */
-const PrivateRoute = ({ children }) => {
+const PrivateRoute = ({ children, permission }) => {
   const token = localStorage.getItem('token');
+  const { tienePermiso } = usePermisos();
 
   if (!token || isTokenExpired(token)) {
     clearSession();
     return <Navigate to="/" replace />;
+  }
+
+  if (permission && !tienePermiso(permission)) {
+    return <Navigate to="/bienvenida" replace />;
   }
 
   return children;

@@ -61,7 +61,7 @@ root.render(
           <Route path="/libro-contable"       element={<PrivateRoute><LibroContable /></PrivateRoute>} />
           <Route path="/clientes"             element={<PrivateRoute><Clientes /></PrivateRoute>} />
           <Route path="/ventas"               element={<PrivateRoute><Ventas /></PrivateRoute>} />
-          <Route path="/calendario"           element={<PrivateRoute><Calendario /></PrivateRoute>} />
+          <Route path="/calendario"           element={<PrivateRoute permission="ver_calendario"><Calendario /></PrivateRoute>} />
         </Routes>
       </PermissionsProvider>
     </Router>
