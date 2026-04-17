@@ -586,30 +586,35 @@ function ModalEgreso({ egreso, onCerrar, onAnulado, puedeAnular }) {
   };
 
   return (
-    <div className="lc-backdrop" onClick={e => e.target === e.currentTarget && onCerrar()}>
+    <div className="lc-backdrop">
       <div className="lc-modal">
         <div className="lc-modal-header">
           <h5 className="lc-modal-title">Detalle del Egreso</h5>
           <button className="lc-modal-close" onClick={onCerrar}>×</button>
         </div>
         <div className="lc-modal-body">
-          <div className="lc-detail-amount">
-            <div className="label">Monto</div>
-            <div className="value" style={{ color: '#dc2626' }}>{fmt$(egreso.monto)}</div>
-            <div style={{ marginTop: 6 }}><CatPill valor={egreso.categoria} tipo="egreso" /></div>
+          {/* Descripción destacada */}
+          <div style={{ background: '#fff5f5', border: '1px solid #fecaca', borderRadius: 12, padding: '12px 16px', marginBottom: 16 }}>
+            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#dc2626', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Descripción</div>
+            <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.95rem' }}>{egreso.concepto}</div>
+            {egreso.notas && (
+              <div style={{ fontSize: '0.82rem', color: '#64748b', marginTop: 6, borderTop: '1px solid #fecaca', paddingTop: 6 }}>{egreso.notas}</div>
+            )}
           </div>
-          <div className="lc-detail-row"><span className="key">Concepto</span><span className="val">{egreso.concepto}</span></div>
+
+          <div className="lc-detail-row"><span className="key">Categoría</span><span className="val"><CatPill valor={egreso.categoria} tipo="egreso" /></span></div>
           <div className="lc-detail-row"><span className="key">Fecha</span><span className="val">{fmtFecha(egreso.fecha)}</span></div>
           <div className="lc-detail-row"><span className="key">Método</span><span className="val">{egreso.metodo_pago}</span></div>
           {egreso.proveedor  && <div className="lc-detail-row"><span className="key">Proveedor</span><span className="val">{egreso.proveedor}</span></div>}
           {egreso.referencia && <div className="lc-detail-row"><span className="key">Referencia</span><span className="val"><code>{egreso.referencia}</code></span></div>}
           <div className="lc-detail-row"><span className="key">Registrado por</span><span className="val">{egreso.usuario_nombre ?? '—'}</span></div>
           <div className="lc-detail-row"><span className="key">Estado</span><span className="val"><Badge estado={egreso.estado ?? 'activo'} /></span></div>
-          {egreso.notas && (
-            <div style={{ background: '#f8fafc', borderRadius: 10, padding: '10px 14px', fontSize: '0.82rem', color: '#475569', marginTop: 12 }}>
-              {egreso.notas}
-            </div>
-          )}
+
+          {/* Total destacado */}
+          <div style={{ marginTop: 16, background: '#fef2f2', borderRadius: 12, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '2px solid #fecaca' }}>
+            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#dc2626', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Total</span>
+            <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#dc2626' }}>{fmt$(egreso.monto)}</span>
+          </div>
         </div>
         {puedeAnular && !anulado && (
           <div className="lc-modal-footer" style={{ justifyContent: 'space-between' }}>
@@ -642,13 +647,26 @@ function ModalEgreso({ egreso, onCerrar, onAnulado, puedeAnular }) {
 ═══════════════════════════════════════════════════════════ */
 
 function ModalFactura({ factura, onCerrar }) {
-  const items = factura.items ?? factura.detalle ?? [];
-  const subtotal = factura.subtotal ?? items.reduce((s, i) => s + (i.subtotal ?? i.precio_total ?? 0), 0);
-  const iva      = factura.iva   ?? 0;
+  const servicios = factura.servicios ?? [];
+  const productos = factura.productos ?? [];
+  const items     = factura.items ?? factura.detalle ?? [];
+  const usaDetalleMecanica = servicios.length > 0 || productos.length > 0;
+
+  const totalServicios = servicios.reduce((s, x) => s + (Number(x.precio) || 0), 0);
+  const totalProductos = productos.reduce((s, p) => s + ((Number(p.precioVenta) || 0) * (Number(p.cantidad) || 1)), 0);
+  const subtotalGenerico = items.reduce((s, i) => s + (i.subtotal ?? i.precio_total ?? 0), 0);
+  const subtotal = factura.subtotal ?? (usaDetalleMecanica ? totalServicios + totalProductos : subtotalGenerico);
+  const iva      = factura.iva ?? 0;
   const total    = factura.total ?? subtotal + iva;
 
+  const seccionLabel = (icon, label, color) => (
+    <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color, marginBottom: 6, marginTop: 16, display: 'flex', alignItems: 'center', gap: 5 }}>
+      <span>{icon}</span>{label}
+    </div>
+  );
+
   return (
-    <div className="lc-backdrop" onClick={e => e.target === e.currentTarget && onCerrar()}>
+    <div className="lc-backdrop">
       <div className="lc-modal wide">
         <div className="lc-modal-header">
           <div>
@@ -660,12 +678,12 @@ function ModalFactura({ factura, onCerrar }) {
 
         <div className="lc-modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
           {/* Datos cliente */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
             <div>
               <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 2 }}>Cliente</div>
-              <div style={{ fontWeight: 700, color: '#0f172a' }}>{factura.cliente_nombre ?? 'Consumidor final'}</div>
-              {factura.cliente_documento && (
-                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{factura.cliente_documento}</div>
+              <div style={{ fontWeight: 700, color: '#0f172a' }}>{factura.cliente_nombre ?? factura.nombreCliente ?? 'Consumidor final'}</div>
+              {(factura.cliente_documento ?? factura.cedula) && (
+                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{factura.cliente_documento ?? factura.cedula}</div>
               )}
             </div>
             <div style={{ textAlign: 'right' }}>
@@ -675,7 +693,7 @@ function ModalFactura({ factura, onCerrar }) {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
             <Badge estado={factura.estado} />
             <CatPill valor={factura.modulo ?? 'general'} tipo="ingreso" />
             {factura.metodo_pago && (
@@ -685,8 +703,59 @@ function ModalFactura({ factura, onCerrar }) {
             )}
           </div>
 
-          {/* Items */}
-          {items.length > 0 ? (
+          {usaDetalleMecanica ? (
+            <>
+              {/* ── Servicios realizados ── */}
+              {servicios.length > 0 && (
+                <>
+                  {seccionLabel('🔧', 'Servicios realizados', '#4338ca')}
+                  <table className="lc-factura-items">
+                    <thead>
+                      <tr>
+                        <th>Servicio</th>
+                        <th style={{ textAlign: 'right' }}>Valor</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {servicios.map((s, i) => (
+                        <tr key={i}>
+                          <td style={{ fontWeight: 600 }}>{s.nombre || '—'}</td>
+                          <td style={{ textAlign: 'right', fontWeight: 700, color: '#4338ca' }}>{fmt$(s.precio)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
+              )}
+
+              {/* ── Productos / Repuestos ── */}
+              {productos.length > 0 && (
+                <>
+                  {seccionLabel('📦', 'Productos / Repuestos', '#0369a1')}
+                  <table className="lc-factura-items">
+                    <thead>
+                      <tr>
+                        <th>Producto</th>
+                        <th style={{ textAlign: 'center' }}>Cantidad</th>
+                        <th style={{ textAlign: 'right' }}>Precio unitario</th>
+                        <th style={{ textAlign: 'right' }}>Mi costo real</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {productos.map((p, i) => (
+                        <tr key={i}>
+                          <td style={{ fontWeight: 600 }}>{p.nombre || '—'}</td>
+                          <td style={{ textAlign: 'center', color: '#64748b' }}>{p.cantidad ?? 1}</td>
+                          <td style={{ textAlign: 'right', color: '#0369a1', fontWeight: 600 }}>{fmt$(p.precioVenta ?? p.precio_unitario)}</td>
+                          <td style={{ textAlign: 'right', color: '#7c3aed', fontWeight: 600 }}>{fmt$(p.costo)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
+              )}
+            </>
+          ) : items.length > 0 ? (
             <table className="lc-factura-items">
               <thead>
                 <tr>
@@ -713,9 +782,17 @@ function ModalFactura({ factura, onCerrar }) {
             </div>
           )}
 
-          {/* Totales */}
-          <div className="lc-factura-totals">
-            <div className="row"><span style={{ color: '#64748b' }}>Subtotal</span><span style={{ fontWeight: 600 }}>{fmt$(subtotal)}</span></div>
+          {/* ── Totales ── */}
+          <div className="lc-factura-totals" style={{ marginTop: 16 }}>
+            {usaDetalleMecanica && totalServicios > 0 && (
+              <div className="row"><span style={{ color: '#64748b' }}>Subtotal servicios</span><span style={{ fontWeight: 600 }}>{fmt$(totalServicios)}</span></div>
+            )}
+            {usaDetalleMecanica && totalProductos > 0 && (
+              <div className="row"><span style={{ color: '#64748b' }}>Subtotal productos</span><span style={{ fontWeight: 600 }}>{fmt$(totalProductos)}</span></div>
+            )}
+            {!usaDetalleMecanica && (
+              <div className="row"><span style={{ color: '#64748b' }}>Subtotal</span><span style={{ fontWeight: 600 }}>{fmt$(subtotal)}</span></div>
+            )}
             {iva > 0 && <div className="row"><span style={{ color: '#64748b' }}>IVA</span><span style={{ fontWeight: 600 }}>{fmt$(iva)}</span></div>}
             <div className="row bold" style={{ marginTop: 4, paddingTop: 8, borderTop: '1px solid #e2e8f0' }}>
               <span>Total</span><span style={{ color: '#059669' }}>{fmt$(total)}</span>
@@ -723,7 +800,7 @@ function ModalFactura({ factura, onCerrar }) {
           </div>
 
           {factura.notas && (
-            <div style={{ marginTop: 16, background: '#f8fafc', borderRadius: 10, padding: '10px 14px', fontSize: '0.82rem', color: '#475569' }}>
+            <div style={{ marginTop: 12, background: '#f8fafc', borderRadius: 10, padding: '10px 14px', fontSize: '0.82rem', color: '#475569' }}>
               <strong>Notas:</strong> {factura.notas}
             </div>
           )}
