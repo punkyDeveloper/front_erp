@@ -524,21 +524,25 @@ const Nav = () => {
           )}
 
           {/* ══════════ Mecánica ══════════ */}
-          {tienePermiso('ver_mecanica') && (
+          {(tienePermiso('ver_mecanica') || tienePermiso('ver_calendario')) && (
             <>
               {showText && <div className="nav-section-label">Mecánica</div>}
-              <li>
-                <NavLink to="/mecanica" className={`nav-item ${isActive('/mecanica') ? 'active' : ''}`} title="Mecánica">
-                  <i className="fas fa-wrench nav-icon"></i>
-                  <span className="nav-text">Mecánica</span>
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/calendario" className={`nav-item ${isActive('/calendario') ? 'active' : ''}`} title="Calendario">
-                  <i className="fas fa-calendar-alt nav-icon"></i>
-                  <span className="nav-text">Calendario</span>
-                </NavLink>
-              </li>
+              {tienePermiso('ver_mecanica') && (
+                <li>
+                  <NavLink to="/mecanica" className={`nav-item ${isActive('/mecanica') ? 'active' : ''}`} title="Mecánica">
+                    <i className="fas fa-wrench nav-icon"></i>
+                    <span className="nav-text">Mecánica</span>
+                  </NavLink>
+                </li>
+              )}
+              {tienePermiso('ver_calendario') && (
+                <li>
+                  <NavLink to="/calendario" className={`nav-item ${isActive('/calendario') ? 'active' : ''}`} title="Calendario">
+                    <i className="fas fa-calendar-alt nav-icon"></i>
+                    <span className="nav-text">Calendario</span>
+                  </NavLink>
+                </li>
+              )}
             </>
           )}
 
