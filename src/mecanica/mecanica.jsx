@@ -641,8 +641,11 @@ export default function ConsultarMantenimientos() {
     }
   };
 
-  const updServicioPrecio = (nombre, p) =>
-    upField('servicios', form.servicios.map((s) => s.nombre === nombre ? { ...s, precio: p } : s));
+  const updServicioPrecio = (idx, p) =>
+    upField('servicios', form.servicios.map((s, i) => i === idx ? { ...s, precio: p } : s));
+
+  const updServicioNombre = (idx, nombre) =>
+    upField('servicios', form.servicios.map((s, i) => i === idx ? { ...s, nombre } : s));
 
   // ── Paginación ──────────────────────────────────────────────────────────────
   const totalPgs  = Math.max(1, Math.ceil(total / rowsPerPage));
@@ -1147,20 +1150,38 @@ export default function ConsultarMantenimientos() {
                         </div>
                       )}
                     </div>
+                    {/* Botón agregar servicio manual */}
+                    <button
+                      style={{ width: '100%', marginTop: 8, padding: '9px', borderRadius: 9, border: '1.5px dashed #D1D5DB', background: '#FAFAFC', color: '#6B7280', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}
+                      onMouseOver={(e) => { e.currentTarget.style.borderColor = '#4338CA'; e.currentTarget.style.color = '#4338CA'; }}
+                      onMouseOut={(e) => { e.currentTarget.style.borderColor = '#D1D5DB'; e.currentTarget.style.color = '#6B7280'; }}
+                      onClick={() => upField('servicios', [...form.servicios, { nombre: '', precio: 0, manual: true }])}>
+                      + Agregar servicio manual
+                    </button>
+
                     {form.servicios.length > 0 && (
                       <div style={{ marginTop: 12 }}>
                         <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF', marginBottom: 6 }}>Ajustar precios</div>
-                        {form.servicios.map((s) => (
-                          <div key={s.nombre} style={S.svcCard}>
-                            <span style={{ fontSize: 12, fontWeight: 600, color: '#1A1A2E', flex: 1 }}>{s.nombre}</span>
+                        {form.servicios.map((s, idx) => (
+                          <div key={idx} style={S.svcCard}>
+                            {s.manual ? (
+                              <input
+                                style={{ ...S.fInput, flex: 1, fontSize: 12, padding: '5px 8px' }}
+                                placeholder="Nombre del servicio"
+                                value={s.nombre}
+                                onChange={(e) => updServicioNombre(idx, e.target.value)}
+                                onClick={(e) => e.stopPropagation()} />
+                            ) : (
+                              <span style={{ fontSize: 12, fontWeight: 600, color: '#1A1A2E', flex: 1 }}>{s.nombre}</span>
+                            )}
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                               <span style={{ fontSize: 11, color: '#9CA3AF' }}>COP</span>
                               <input type="text" inputMode="numeric" value={fmtNum(s.precio)}
                                 style={{ width: 110, padding: '5px 8px', borderRadius: 7, border: '1px solid #E8E8ED', fontSize: 12, fontWeight: 600, fontFamily: "'DM Sans',sans-serif", outline: 'none', textAlign: 'right', background: '#FAFAFC' }}
-                                onChange={(e) => updServicioPrecio(s.nombre, parseNum(e.target.value))}
+                                onChange={(e) => updServicioPrecio(idx, parseNum(e.target.value))}
                                 onClick={(e) => e.stopPropagation()} />
                               <button style={{ background: 'none', border: 'none', color: '#9CA3AF', cursor: 'pointer', fontSize: 14 }}
-                                onClick={() => upField('servicios', form.servicios.filter((x) => x.nombre !== s.nombre))}>✕</button>
+                                onClick={() => upField('servicios', form.servicios.filter((_, i) => i !== idx))}>✕</button>
                             </div>
                           </div>
                         ))}
