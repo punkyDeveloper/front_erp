@@ -56,16 +56,21 @@ const generarFactura = (item) => {
   const fechaDoc    = new Date(item.fecha).toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
   const fechaEmision = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
   const num          = `MEC-${String(item._id || item.id).slice(-6).toUpperCase()}`;
+  let   userNombre   = '';
+  let   companyNombre = '';
+  try { const u = JSON.parse(localStorage.getItem('user') || '{}'); userNombre = u.nombre || ''; companyNombre = u.nombreCompany || ''; } catch {}
 
   const sRows = (item.servicios || []).map((s) =>
     `<tr><td style="padding:10px 8px;border-bottom:1px solid #F0F0F5;font-size:13px;">🔧 ${escHtml(s.nombre)}</td>
      <td style="padding:10px 8px;border-bottom:1px solid #F0F0F5;text-align:center;font-size:12px;color:#9CA3AF;">Mano de obra</td>
+     <td style="padding:10px 8px;border-bottom:1px solid #F0F0F5;text-align:center;font-size:12px;color:#6B7280;">1</td>
      <td style="padding:10px 8px;border-bottom:1px solid #F0F0F5;text-align:right;font-weight:600;font-size:13px;">${fmt(s.precio)}</td></tr>`
   ).join('');
 
   const pRows = (item.productos || []).map((p) =>
-    `<tr><td style="padding:10px 8px;border-bottom:1px solid #F0F0F5;font-size:13px;">📦 ${escHtml(p.nombre)}${(p.cantidad > 1) ? ` <span style="font-size:11px;color:#7C3AED;">(×${p.cantidad})</span>` : ''}</td>
+    `<tr><td style="padding:10px 8px;border-bottom:1px solid #F0F0F5;font-size:13px;">📦 ${escHtml(p.nombre)}</td>
      <td style="padding:10px 8px;border-bottom:1px solid #F0F0F5;text-align:center;font-size:12px;color:#7C3AED;font-weight:600;">Repuesto</td>
+     <td style="padding:10px 8px;border-bottom:1px solid #F0F0F5;text-align:center;font-size:13px;font-weight:700;color:#7C3AED;">${p.cantidad || 1}</td>
      <td style="padding:10px 8px;border-bottom:1px solid #F0F0F5;text-align:right;font-weight:600;font-size:13px;">${fmt((p.precioVenta || 0) * (p.cantidad || 1))}</td></tr>`
   ).join('');
 
@@ -85,24 +90,24 @@ const generarFactura = (item) => {
 .sec p{font-size:13px;color:#1A1A2E;font-weight:500;line-height:1.7;}.sec .lb{font-size:11px;color:#9CA3AF;font-weight:400;}
 table{width:100%;border-collapse:collapse;margin-bottom:20px;}
 th{padding:10px 8px;background:#FAFAFA;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#9CA3AF;font-weight:700;border-bottom:2px solid #F0F0F5;text-align:left;}
-th:nth-child(2){text-align:center;}th:last-child{text-align:right;}
+th:nth-child(2){text-align:center;}th:nth-child(3){text-align:center;}th:last-child{text-align:right;}
 .tots{border-top:1px solid #F0F0F5;padding-top:14px;}.tr{display:flex;justify-content:space-between;padding:4px 0;font-size:13px;color:#6B7280;}
 .tr.main{font-size:17px;font-weight:700;color:#1A1A2E;border-top:2px solid #1A1A2E;padding-top:10px;margin-top:6px;}
 .ftr{background:#FAFAFA;border-top:1px solid #F0F0F5;padding:18px 40px;text-align:center;font-size:12px;color:#9CA3AF;}
 @media print{body{background:#fff;padding:0;}.inv{box-shadow:none;border-radius:0;}.np{display:none!important;}}
 </style></head><body>
 <div class="inv">
-  <div class="hdr"><div><h1>⚙️ Mecánica</h1><p>Sistema de Gestión Vehicular</p></div><div class="num"><h2>${escHtml(num)}</h2><p>Emitida: ${escHtml(fechaEmision)}</p></div></div>
+  <div class="hdr"><div><h1>⚙️ ${escHtml(companyNombre || 'Mecánica')}</h1><p>Sistema de Gestión Vehicular</p></div><div class="num"><h2>${escHtml(num)}</h2><p>Emitida: ${escHtml(fechaEmision)}</p></div></div>
   <div class="bdy">
     <div class="grid">
-      <div class="sec"><h4>Cliente</h4><p><span class="lb">Cédula:</span><br/>${escHtml(item.cedula)}</p></div>
+      <div class="sec"><h4>Cliente</h4><p>${escHtml(item.nombreCliente || '—')}<br/><span class="lb">Cédula:</span> ${escHtml(item.cedula)}</p></div>
       <div class="sec"><h4>Vehículo</h4><p>${escHtml(item.vehiculo)}<br/><span class="lb">Placa:</span> ${escHtml(item.placa)}<br/><span class="lb">Km:</span> ${(item.kilometraje||0).toLocaleString()}</p></div>
-      <div class="sec"><h4>Taller</h4><p>${escHtml(item.taller || '—')}</p></div>
+      <div class="sec"><h4>Taller</h4><p>${escHtml(companyNombre || item.taller || '—')}<br/><span class="lb">Mecánico:</span> ${escHtml(userNombre || '—')}</p></div>
       <div class="sec"><h4>Servicio</h4><p><span class="lb">Fecha:</span> ${escHtml(fechaDoc)}<br/>${tipoIcon(item.tipo)} ${escHtml(item.tipo)}</p></div>
     </div>
     ${item.descripcion ? `<div style="background:#F8F9FA;border-radius:10px;padding:14px 18px;margin-bottom:24px;font-size:13px;color:#4B5563;border-left:3px solid #1A1A2E;"><strong style="font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#9CA3AF;display:block;margin-bottom:4px;">Descripción</strong>${escHtml(item.descripcion)}</div>` : ''}
-    <table><thead><tr><th>Concepto</th><th style="text-align:center;">Tipo</th><th style="text-align:right;">Valor</th></tr></thead>
-    <tbody>${sRows}${pRows}${!sRows && !pRows ? '<tr><td colspan="3" style="padding:14px 8px;color:#9CA3AF;font-size:13px;">Sin conceptos</td></tr>' : ''}</tbody></table>
+    <table><thead><tr><th>Concepto</th><th style="text-align:center;">Tipo</th><th style="text-align:center;">Cant.</th><th style="text-align:right;">Valor</th></tr></thead>
+    <tbody>${sRows}${pRows}${!sRows && !pRows ? '<tr><td colspan="4" style="padding:14px 8px;color:#9CA3AF;font-size:13px;">Sin conceptos</td></tr>' : ''}</tbody></table>
     <div class="tots">
       <div class="tr"><span>Subtotal mano de obra</span><span>${fmt(stServ)}</span></div>
       <div class="tr"><span>Subtotal repuestos</span><span>${fmt(stProd)}</span></div>
@@ -110,7 +115,7 @@ th:nth-child(2){text-align:center;}th:last-child{text-align:right;}
       <div class="tr main"><span>TOTAL</span><span>${fmt(item.costoCliente || 0)}</span></div>
     </div>
   </div>
-  <div class="ftr">Gracias por su confianza · ${escHtml(num)} · ${escHtml(fechaEmision)}</div>
+  <div class="ftr">Gracias por su confianza · ${escHtml(num)} · ${escHtml(fechaEmision)}${userNombre ? ` · Mecánico: ${escHtml(userNombre)}` : ''}</div>
 </div>
 <div class="np" style="max-width:680px;margin:20px auto;text-align:center;">
   <button onclick="window.print()" style="padding:12px 28px;background:linear-gradient(135deg,#1A1A2E,#3D3D6B);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">🖨️ Imprimir / PDF</button>
@@ -125,6 +130,8 @@ const generarOrden = (item) => {
   const fechaDoc    = new Date(item.fecha).toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
   const fechaEmision = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
   const num          = `ORD-${String(item._id || item.id).slice(-6).toUpperCase()}`;
+  let   companyNombre = '';
+  try { const u = JSON.parse(localStorage.getItem('user') || '{}'); companyNombre = u.nombreCompany || ''; } catch {}
 
   const sRows = (item.servicios || []).map((s, i) =>
     `<tr><td style="padding:12px 10px;border-bottom:1px solid #F0F0F5;font-size:13px;">
@@ -180,7 +187,7 @@ th:nth-child(2){text-align:center;}th:nth-child(3){text-align:center;}th:last-ch
       <div class="inf"><div class="lb">Vehículo</div><div class="vl">${escHtml(item.vehiculo)}</div></div>
       <div class="inf"><div class="lb">Placa</div><div class="vl" style="font-family:monospace;">${escHtml(item.placa)}</div></div>
       <div class="inf"><div class="lb">Kilometraje</div><div class="vl">${(item.kilometraje||0).toLocaleString()} km</div></div>
-      <div class="inf"><div class="lb">Taller</div><div class="vl">${escHtml(item.taller || '—')}</div></div>
+      <div class="inf"><div class="lb">Empresa</div><div class="vl">${escHtml(companyNombre || item.taller || '—')}</div></div>
       <div class="inf"><div class="lb">Fecha</div><div class="vl">${escHtml(fechaDoc)}</div></div>
     </div>
     ${item.descripcion ? `<div style="background:#FFFBEB;border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:#78350F;border-left:3px solid #F59E0B;"><strong style="font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#D97706;display:block;margin-bottom:4px;">Descripción</strong>${escHtml(item.descripcion)}</div>` : ''}
@@ -210,6 +217,7 @@ const EMPTY_FORM = {
   estado: 'Pendiente', taller: '',
   servicios: [],
   productos: [],
+  abonos: [],
   // Datos del cliente para factura
   clienteId: '',
   nombreCliente: '',
@@ -285,6 +293,8 @@ export default function ConsultarMantenimientos() {
   const [loading, setLoading]         = useState(true);
   const [saving, setSaving]           = useState(false);
   const [error, setError]             = useState('');
+  const [modalError, setModalError]   = useState('');
+  const [triedSave, setTriedSave]     = useState(false);
   const [search, setSearch]           = useState('');
   const [filterEstado, setFilter]     = useState('Todos');
   const [modalOpen, setModalOpen]     = useState(false);
@@ -341,6 +351,9 @@ export default function ConsultarMantenimientos() {
   const costoCalculado =
     form.servicios.reduce((s, x) => s + (Number(x.precio) || 0), 0) +
     form.productos.reduce((s, p) => s + ((Number(p.precioVenta) || 0) * (Number(p.cantidad) || 1)), 0);
+
+  const totalAbonado  = (form.abonos || []).reduce((s, a) => s + (Number(a.monto) || 0), 0);
+  const faltante      = Math.max(0, costoCalculado - totalAbonado);
 
   const gananciasCalculadas = form.productos.reduce(
     (s, p) => s + (((Number(p.precioVenta) || 0) - (Number(p.costo) || 0)) * (Number(p.cantidad) || 1)), 0,
@@ -506,43 +519,83 @@ export default function ConsultarMantenimientos() {
     setClienteEstado('idle');
     setCreandoCliente(false);
     setSvcSearch('');
+    setModalError('');
+    setTriedSave(false);
     setModalOpen(true);
   };
 
-  const openEdit = (item) => {
-    setEditingId(item._id || item.id);
-    setForm({
-      cedula:               item.cedula || '',
-      placa:                item.placa || '',
-      vehiculo:             item.vehiculo || '',
-      tipo:                 item.tipo || 'Preventivo',
-      descripcion:          item.descripcion || '',
-      kilometraje:          String(item.kilometraje || ''),
-      fecha:                (item.fecha || '').split('T')[0] || new Date().toISOString().split('T')[0],
-      estado:               item.estado || 'Pendiente',
-      taller:               item.taller || '',
-      servicios:            (item.servicios || []).map((s) => ({ ...s, precio: String(s.precio ?? '') })),
-      productos:            (item.productos || []).map((p) => ({ ...p, precioVenta: String(p.precioVenta ?? ''), costo: String(p.costo ?? ''), cantidad: p.cantidad || 1 })),
-      clienteId:            item.clienteId || '',
-      nombreCliente:        item.nombreCliente || '',
-      emailCliente:         item.emailCliente || '',
-      telefonoCliente:      item.telefonoCliente || '',
-      ciudadCliente:        item.ciudadCliente || '',
-      tipoDocumentoCliente: item.tipoDocumentoCliente || 'CC',
-    });
-    // Al editar también buscar el cliente
+  const openEdit = async (item) => {
+    const id = item._id || item.id;
+    setEditingId(id);
+    setModalError('');
+    setTriedSave(false);
     setClienteInfo(null);
     setClienteEstado('idle');
     setSvcSearch('');
-    if (item.cedula && item.cedula.length >= 6) {
-      setClienteEstado('buscando');
-      buscarCliente(item.cedula);
-    }
     setModalOpen(true);
+
+    // Cargar datos completos del registro (el listado puede no incluir servicios/productos)
+    let fullItem = item;
+    try {
+      const r = await fetch(`${API_URL}/mecanica/${id}`, { headers: authHeaders() });
+      const j = await r.json();
+      if (r.ok) fullItem = j.data || j;
+    } catch (_) {}
+
+    setForm({
+      cedula:               fullItem.cedula || '',
+      placa:                fullItem.placa || '',
+      vehiculo:             fullItem.vehiculo || '',
+      tipo:                 fullItem.tipo || 'Preventivo',
+      descripcion:          fullItem.descripcion || '',
+      kilometraje:          String(fullItem.kilometraje || ''),
+      fecha:                (fullItem.fecha || '').split('T')[0] || new Date().toISOString().split('T')[0],
+      estado:               fullItem.estado || 'Pendiente',
+      taller:               fullItem.taller || '',
+      servicios:            (fullItem.servicios || []).map((s) => ({ ...s, precio: String(s.precio ?? '') })),
+      productos:            (fullItem.productos || []).map((p) => ({ ...p, precioVenta: String(p.precioVenta ?? ''), costo: String(p.costo ?? ''), cantidad: p.cantidad || 1 })),
+      abonos:               (fullItem.abonos || []).map((a) => ({ ...a, monto: String(a.monto ?? '') })),
+      clienteId:            fullItem.clienteId || '',
+      nombreCliente:        fullItem.nombreCliente || '',
+      emailCliente:         fullItem.emailCliente || '',
+      telefonoCliente:      fullItem.telefonoCliente || '',
+      ciudadCliente:        fullItem.ciudadCliente || '',
+      tipoDocumentoCliente: fullItem.tipoDocumentoCliente || 'CC',
+    });
+
+    if (fullItem.cedula && fullItem.cedula.length >= 6) {
+      setClienteEstado('buscando');
+      buscarCliente(fullItem.cedula);
+    }
+  };
+
+  const validateForm = () => {
+    if (!form.cedula)      return 'El documento del cliente es obligatorio.';
+    if (!form.placa)       return 'La placa del vehículo es obligatoria.';
+    if (!form.vehiculo)    return 'El nombre del vehículo es obligatorio.';
+    if (!form.descripcion) return 'La descripción es obligatoria.';
+    const svcSinNombre = (form.servicios || []).some(s => s.manual && (!s.nombre || !s.nombre.trim()));
+    if (svcSinNombre) return 'Hay un servicio sin nombre. Completa el nombre o elimínalo.';
+    const svcSinPrecio = (form.servicios || []).some(s => s.manual && !(Number(s.precio) > 0));
+    if (svcSinPrecio) return 'Hay un servicio sin precio. Ingresa el valor o elimínalo.';
+    const prodSinNombre = (form.productos || []).some(p => !p.nombre || !p.nombre.trim());
+    if (prodSinNombre) return 'Hay un producto/repuesto sin nombre. Completa el nombre o elimínalo.';
+    const prodSinPrecio = (form.productos || []).some(p => p.manual && !(Number(p.precioVenta) > 0));
+    if (prodSinPrecio) return 'Hay un producto/repuesto sin precio unitario. Ingresa el valor o elimínalo.';
+    const prodSinCantidad = (form.productos || []).some(p => p.manual && !(Number(p.cantidad) > 0));
+    if (prodSinCantidad) return 'Hay un producto/repuesto sin cantidad válida. Ingresa al menos 1.';
+    const prodSinCosto = (form.productos || []).some(p => p.manual && !(Number(p.costo) > 0));
+    if (prodSinCosto) return 'Hay un producto/repuesto sin costo real. Ingresa el costo o elimínalo.';
+    const abonoSinMonto = (form.abonos || []).some(a => !(Number(a.monto) > 0));
+    if (abonoSinMonto) return 'Hay un abono sin monto. Ingresa el valor o elimínalo.';
+    return null;
   };
 
   const handleSave = async () => {
-    if (!form.cedula || !form.placa || !form.vehiculo || !form.descripcion) return;
+    setTriedSave(true);
+    const validationMsg = validateForm();
+    if (validationMsg) { setModalError(validationMsg); return; }
+    setModalError('');
     try {
       setSaving(true);
       const body = {
@@ -555,6 +608,9 @@ export default function ConsultarMantenimientos() {
         servicios: (form.servicios || [])
           .filter(s => s.nombre && s.nombre.trim())
           .map(s => ({ ...s, precio: Number(s.precio) || 0 })),
+        abonos: (form.abonos || [])
+          .filter(a => Number(a.monto) > 0)
+          .map(a => ({ ...a, monto: Number(a.monto) })),
       };
       const url    = editingId ? `${API_URL}/mecanica/${editingId}` : `${API_URL}/mecanica`;
       const method = editingId ? 'PUT' : 'POST';
@@ -564,9 +620,11 @@ export default function ConsultarMantenimientos() {
       setModalOpen(false);
       setForm(EMPTY_FORM);
       setEditingId(null);
+      setTriedSave(false);
+      setModalError('');
       fetchData();
     } catch (e) {
-      setError(e.message);
+      setModalError(e.message);
     } finally {
       setSaving(false);
     }
@@ -717,19 +775,19 @@ export default function ConsultarMantenimientos() {
               <table style={S.table}>
                 <thead>
                   <tr>
-                    {['Cliente (C.C.)', 'Vehículo', 'Tipo', 'Servicios', 'Descripción', 'Km', 'Fecha', 'Estado', 'Total', 'Acciones'].map((h) => (
+                    {['Cliente (C.C.)', 'Vehículo', 'Tipo', 'Km', 'Fecha', 'Estado', 'Total', 'Acciones'].map((h) => (
                       <th key={h} style={{ ...S.th, ...(h === 'Acciones' && { textAlign: 'center' }) }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td colSpan={10} style={{ padding: '60px 20px', textAlign: 'center', color: '#9CA3AF' }}>
+                    <tr><td colSpan={8} style={{ padding: '60px 20px', textAlign: 'center', color: '#9CA3AF' }}>
                       <div style={{ fontSize: 28 }}>⏳</div>
                       <div style={{ marginTop: 8, fontSize: 14, fontWeight: 600 }}>Cargando...</div>
                     </td></tr>
                   ) : filtered.length === 0 ? (
-                    <tr><td colSpan={10} style={{ padding: '60px 20px', textAlign: 'center', color: '#9CA3AF' }}>
+                    <tr><td colSpan={8} style={{ padding: '60px 20px', textAlign: 'center', color: '#9CA3AF' }}>
                       <div style={{ fontSize: 36 }}>🔍</div>
                       <div style={{ marginTop: 8, fontSize: 14, fontWeight: 600 }}>Sin registros</div>
                     </td></tr>
@@ -746,14 +804,6 @@ export default function ConsultarMantenimientos() {
                           <div style={{ fontSize: 11, color: '#9CA3AF', fontFamily: 'monospace' }}>{item.placa}</div>
                         </td>
                         <td style={S.td}><span style={{ fontSize: 13 }}>{tipoIcon(item.tipo)} {item.tipo}</span></td>
-                        <td style={S.td}>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, maxWidth: 180 }}>
-                            {sNombres.slice(0, 2).map((s, i) => <span key={i} style={S.chip}>{s}</span>)}
-                            {sNombres.length > 2 && <span style={{ ...S.chip, background: '#1A1A2E', color: '#FFF' }}>+{sNombres.length - 2}</span>}
-                            {sNombres.length === 0 && <span style={{ color: '#D1D5DB', fontSize: 11 }}>—</span>}
-                          </div>
-                        </td>
-                        <td style={{ ...S.td, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.descripcion}</td>
                         <td style={S.td}>{(item.kilometraje || 0).toLocaleString()} km</td>
                         <td style={{ ...S.td, whiteSpace: 'nowrap', fontSize: 12 }}>
                           {new Date(item.fecha).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}
@@ -780,8 +830,8 @@ export default function ConsultarMantenimientos() {
                                 <span>🧾</span><span style={{ fontSize: 8, fontWeight: 700, color: '#2563EB' }}>FACTURA</span>
                               </button>
                             )}
-                            {/* FINALIZAR — requiere editar */}
-                            {can('editar_mecanica') && item.estado !== 'Finalizado' && (
+                            {/* FINALIZAR — requiere editar, no aplica a Cancelado */}
+                            {can('editar_mecanica') && item.estado !== 'Finalizado' && item.estado !== 'Cancelado' && (
                               <button title="Marcar como finalizado" onClick={() => handleFinalizar(item)} disabled={saving}
                                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, padding: '5px 6px', borderRadius: 7, border: '1px solid #E8E8ED', background: '#FFF', cursor: 'pointer', fontSize: 13 }}
                                 onMouseOver={(e) => e.currentTarget.style.background = '#ECFDF5'}
@@ -790,7 +840,7 @@ export default function ConsultarMantenimientos() {
                               </button>
                             )}
                             {/* EDITAR — requiere editar */}
-                            {can('editar_mecanica') && item.estado !== 'Finalizado' && (
+                            {can('editar_mecanica') && item.estado !== 'Finalizado' && item.estado !== 'Cancelado' && (
                               <button title="Editar" onClick={() => openEdit(item)}
                                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, padding: '5px 6px', borderRadius: 7, border: '1px solid #E8E8ED', background: '#FFF', cursor: 'pointer', fontSize: 13 }}
                                 onMouseOver={(e) => e.currentTarget.style.background = '#F3F4F6'}
@@ -851,9 +901,18 @@ export default function ConsultarMantenimientos() {
           {modalOpen && (
             <div style={{ ...S.overlay, animation: 'fadeIn 0.2s ease' }}>
               <div style={{ ...S.modal, animation: 'slideUp 0.25s ease' }} className="form-modal">
-                <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 24, color: '#1A1A2E' }}>
+                <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: modalError ? 12 : 24, color: '#1A1A2E' }}>
                   {editingId ? '✏️ Editar Mantenimiento' : '+ Nuevo Mantenimiento'}
                 </h2>
+
+                {/* ── BANNER DE ERROR — siempre visible arriba ── */}
+                {modalError && (
+                  <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '10px 16px', color: '#DC2626', fontSize: 13, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <span>⚠️ {modalError}</span>
+                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DC2626', fontSize: 16, lineHeight: 1 }} onClick={() => setModalError('')}>✕</button>
+                  </div>
+                )}
+
                 <div style={S.formGrid} className="form-grid-r">
 
                   {/* ── CÉDULA CON BÚSQUEDA DE CLIENTE ────────────────────── */}
@@ -869,7 +928,8 @@ export default function ConsultarMantenimientos() {
                     <input
                       style={{
                         ...S.fInput,
-                        borderColor: clienteEstado === 'encontrado' ? '#059669'
+                        borderColor: triedSave && !form.cedula ? '#DC2626'
+                          : clienteEstado === 'encontrado' ? '#059669'
                           : clienteEstado === 'no_encontrado' ? '#F59E0B'
                           : '#E8E8ED',
                         borderWidth: clienteEstado !== 'idle' ? 2 : 1,
@@ -1056,14 +1116,14 @@ export default function ConsultarMantenimientos() {
 
                   {/* Placa */}
                   <div style={S.fGroup}>
-                    <label style={S.fLabel}>Placa *</label>
-                    <input style={S.fInput} placeholder="ABC-123" value={form.placa}
+                    <label style={{ ...S.fLabel, color: triedSave && !form.placa ? '#DC2626' : undefined }}>Placa *</label>
+                    <input style={{ ...S.fInput, borderColor: triedSave && !form.placa ? '#DC2626' : undefined }} placeholder="ABC-123" value={form.placa}
                       onChange={(e) => upField('placa', e.target.value.toUpperCase())} maxLength={7} />
                   </div>
                   {/* Vehículo */}
                   <div style={S.fGroup}>
-                    <label style={S.fLabel}>Vehículo *</label>
-                    <input style={S.fInput} placeholder="Marca Modelo Año" value={form.vehiculo}
+                    <label style={{ ...S.fLabel, color: triedSave && !form.vehiculo ? '#DC2626' : undefined }}>Vehículo *</label>
+                    <input style={{ ...S.fInput, borderColor: triedSave && !form.vehiculo ? '#DC2626' : undefined }} placeholder="Marca Modelo Año" value={form.vehiculo}
                       onChange={(e) => upField('vehiculo', e.target.value)} />
                   </div>
                   {/* Tipo */}
@@ -1093,13 +1153,6 @@ export default function ConsultarMantenimientos() {
                     <input style={S.fInput} type="date" value={form.fecha}
                       onChange={(e) => upField('fecha', e.target.value)} />
                   </div>
-                  {/* Taller */}
-                  <div style={S.fGroup}>
-                    <label style={S.fLabel}>Taller</label>
-                    <input style={S.fInput} placeholder="Nombre del taller" value={form.taller}
-                      onChange={(e) => upField('taller', e.target.value)} />
-                  </div>
-
                   {/* ── SERVICIOS ────────────────────────────────────────── */}
                   <div style={{ ...S.fGroup, ...S.fFull }}>
                     <label style={S.fLabel}>
@@ -1155,7 +1208,7 @@ export default function ConsultarMantenimientos() {
                       style={{ width: '100%', marginTop: 8, padding: '9px', borderRadius: 9, border: '1.5px dashed #D1D5DB', background: '#FAFAFC', color: '#6B7280', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}
                       onMouseOver={(e) => { e.currentTarget.style.borderColor = '#4338CA'; e.currentTarget.style.color = '#4338CA'; }}
                       onMouseOut={(e) => { e.currentTarget.style.borderColor = '#D1D5DB'; e.currentTarget.style.color = '#6B7280'; }}
-                      onClick={() => upField('servicios', [...form.servicios, { nombre: '', precio: 0, manual: true }])}>
+                      onClick={() => upField('servicios', [{ nombre: '', precio: '', manual: true }, ...form.servicios])}>
                       + Agregar servicio manual
                     </button>
 
@@ -1166,7 +1219,7 @@ export default function ConsultarMantenimientos() {
                           <div key={idx} style={S.svcCard}>
                             {s.manual ? (
                               <input
-                                style={{ ...S.fInput, flex: 1, fontSize: 12, padding: '5px 8px' }}
+                                style={{ ...S.fInput, flex: 1, fontSize: 12, padding: '5px 8px', borderColor: triedSave && s.manual && (!s.nombre || !s.nombre.trim()) ? '#DC2626' : undefined }}
                                 placeholder="Nombre del servicio"
                                 value={s.nombre}
                                 onChange={(e) => updServicioNombre(idx, e.target.value)}
@@ -1176,8 +1229,8 @@ export default function ConsultarMantenimientos() {
                             )}
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                               <span style={{ fontSize: 11, color: '#9CA3AF' }}>COP</span>
-                              <input type="text" inputMode="numeric" value={fmtNum(s.precio)}
-                                style={{ width: 110, padding: '5px 8px', borderRadius: 7, border: '1px solid #E8E8ED', fontSize: 12, fontWeight: 600, fontFamily: "'DM Sans',sans-serif", outline: 'none', textAlign: 'right', background: '#FAFAFC' }}
+                              <input type="text" inputMode="numeric" placeholder="0" value={fmtNum(s.precio)}
+                                style={{ width: 110, padding: '5px 8px', borderRadius: 7, border: `1px solid ${triedSave && s.manual && !(Number(s.precio) > 0) ? '#DC2626' : '#E8E8ED'}`, fontSize: 12, fontWeight: 600, fontFamily: "'DM Sans',sans-serif", outline: 'none', textAlign: 'right', background: '#FAFAFC' }}
                                 onChange={(e) => updServicioPrecio(idx, parseNum(e.target.value))}
                                 onClick={(e) => e.stopPropagation()} />
                               <button style={{ background: 'none', border: 'none', color: '#9CA3AF', cursor: 'pointer', fontSize: 14 }}
@@ -1205,7 +1258,7 @@ export default function ConsultarMantenimientos() {
                       <div key={idx} style={{ border: '1px solid #E8E8ED', borderRadius: 10, padding: '10px 12px', marginBottom: 6, background: '#FAFAFC' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                           <span style={{ fontSize: 13 }}>📦</span>
-                          <input style={{ ...S.fInput, flex: 1, padding: '6px 9px', fontSize: 12 }}
+                          <input style={{ ...S.fInput, flex: 1, padding: '6px 9px', fontSize: 12, borderColor: triedSave && (!p.nombre || !p.nombre.trim()) ? '#DC2626' : undefined }}
                             placeholder="Nombre del producto / repuesto" value={p.nombre}
                             onChange={(e) => { const u = [...form.productos]; u[idx] = { ...u[idx], nombre: e.target.value }; upField('productos', u); }} />
                           <button style={{ background: 'none', border: 'none', color: '#DC2626', cursor: 'pointer', fontSize: 16 }}
@@ -1213,21 +1266,21 @@ export default function ConsultarMantenimientos() {
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
                           <div style={S.fGroup}>
-                            <label style={{ ...S.fLabel, color: '#059669' }}>Cantidad</label>
-                            <input style={{ ...S.fInput, fontSize: 12, padding: '6px 9px', borderColor: '#A7F3D0', background: '#F0FDF4' }}
+                            <label style={{ ...S.fLabel, color: triedSave && p.manual && !(Number(p.cantidad) > 0) ? '#DC2626' : '#059669' }}>Cantidad</label>
+                            <input style={{ ...S.fInput, fontSize: 12, padding: '6px 9px', borderColor: triedSave && p.manual && !(Number(p.cantidad) > 0) ? '#DC2626' : '#A7F3D0', background: '#F0FDF4' }}
                               type="number" min="1" placeholder="1" value={p.cantidad ?? 1}
                               onChange={(e) => { const u = [...form.productos]; u[idx] = { ...u[idx], cantidad: e.target.value }; upField('productos', u); }} />
                           </div>
                           <div style={S.fGroup}>
-                            <label style={{ ...S.fLabel, color: '#2563EB' }}>Precio unitario (COP)</label>
-                            <input style={{ ...S.fInput, fontSize: 12, padding: '6px 9px', borderColor: '#BFDBFE', background: '#EFF6FF' }}
+                            <label style={{ ...S.fLabel, color: triedSave && p.manual && !(Number(p.precioVenta) > 0) ? '#DC2626' : '#2563EB' }}>Precio unitario (COP)</label>
+                            <input style={{ ...S.fInput, fontSize: 12, padding: '6px 9px', borderColor: triedSave && p.manual && !(Number(p.precioVenta) > 0) ? '#DC2626' : '#BFDBFE', background: '#EFF6FF' }}
                               type="text" inputMode="numeric" placeholder="0"
                               value={fmtNum(p.precioVenta)}
                               onChange={(e) => { const u = [...form.productos]; u[idx] = { ...u[idx], precioVenta: parseNum(e.target.value) }; upField('productos', u); }} />
                           </div>
                           <div style={S.fGroup}>
-                            <label style={{ ...S.fLabel, color: '#7C3AED' }}>🔒 Mi costo real (COP)</label>
-                            <input style={{ ...S.fInput, fontSize: 12, padding: '6px 9px', borderColor: '#DDD6FE', background: '#F5F3FF' }}
+                            <label style={{ ...S.fLabel, color: triedSave && p.manual && !(Number(p.costo) > 0) ? '#DC2626' : '#7C3AED' }}>🔒 Mi costo real (COP)</label>
+                            <input style={{ ...S.fInput, fontSize: 12, padding: '6px 9px', borderColor: triedSave && p.manual && !(Number(p.costo) > 0) ? '#DC2626' : '#DDD6FE', background: '#F5F3FF' }}
                               type="text" inputMode="numeric" placeholder="0"
                               value={fmtNum(p.costo)}
                               onChange={(e) => { const u = [...form.productos]; u[idx] = { ...u[idx], costo: parseNum(e.target.value) }; upField('productos', u); }} />
@@ -1249,7 +1302,7 @@ export default function ConsultarMantenimientos() {
                     <button style={{ width: '100%', padding: '9px', borderRadius: 9, border: '1.5px dashed #D1D5DB', background: '#FAFAFC', color: '#6B7280', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}
                       onMouseOver={(e) => { e.currentTarget.style.borderColor = '#1A1A2E'; e.currentTarget.style.color = '#1A1A2E'; }}
                       onMouseOut={(e) => { e.currentTarget.style.borderColor = '#D1D5DB'; e.currentTarget.style.color = '#6B7280'; }}
-                      onClick={() => upField('productos', [...form.productos, { nombre: '', precioVenta: '', costo: '', cantidad: 1 }])}>
+                      onClick={() => upField('productos', [...form.productos, { nombre: '', precioVenta: '', costo: '', cantidad: 1, manual: true }])}>
                       + Agregar producto / repuesto
                     </button>
                   </div>
@@ -1264,7 +1317,7 @@ export default function ConsultarMantenimientos() {
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
                           {[
                             { label: 'Cobrado al cliente',    value: fmt(costoCalculado), color: '#FFF' },
-                            { label: 'Mi costo total',        value: fmt(form.productos.reduce((s, p) => s + (Number(p.costo)||0), 0)), color: '#FDA4AF' },
+                            { label: 'Mi costo total',        value: fmt(form.productos.reduce((s, p) => s + (Number(p.costo)||0) * (Number(p.cantidad)||1), 0)), color: '#FDA4AF' },
                             { label: '📈 Ganancia productos', value: fmt(gananciasCalculadas), color: gananciasCalculadas >= 0 ? '#6EE7B7' : '#FDA4AF' },
                           ].map((k) => (
                             <div key={k.label} style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 9, padding: '9px 12px' }}>
@@ -1277,29 +1330,93 @@ export default function ConsultarMantenimientos() {
                     </div>
                   )}
 
+                  {/* ── ABONOS ───────────────────────────────────────────── */}
+                  <div style={{ ...S.fGroup, ...S.fFull }}>
+                    <label style={S.fLabel}>💵 Abonos del cliente</label>
+
+                    {/* Filas de abonos */}
+                    {(form.abonos || []).map((a, idx) => (
+                      <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 140px auto', gap: 8, marginBottom: 6, alignItems: 'center' }}>
+                        <input
+                          style={{ ...S.fInput, fontSize: 12, padding: '7px 10px' }}
+                          placeholder="Nota (opcional)"
+                          value={a.nota || ''}
+                          onChange={(e) => { const u = [...form.abonos]; u[idx] = { ...u[idx], nota: e.target.value }; upField('abonos', u); }} />
+                        <input
+                          type="text" inputMode="numeric"
+                          style={{ ...S.fInput, fontSize: 13, fontWeight: 700, padding: '7px 10px', textAlign: 'right', borderColor: triedSave && !(Number(a.monto) > 0) ? '#DC2626' : undefined }}
+                          placeholder="$ Monto"
+                          value={fmtNum(a.monto)}
+                          onChange={(e) => { const u = [...form.abonos]; u[idx] = { ...u[idx], monto: parseNum(e.target.value) }; upField('abonos', u); }} />
+                        <button style={{ background: 'none', border: 'none', color: '#DC2626', cursor: 'pointer', fontSize: 18, lineHeight: 1 }}
+                          onClick={() => upField('abonos', form.abonos.filter((_, i) => i !== idx))}>✕</button>
+                      </div>
+                    ))}
+
+                    {/* Botón agregar abono */}
+                    <button
+                      style={{ width: '100%', padding: '8px', borderRadius: 9, border: '1.5px dashed #D1D5DB', background: '#FAFAFC', color: '#6B7280', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif", marginBottom: 10 }}
+                      onMouseOver={(e) => { e.currentTarget.style.borderColor = '#059669'; e.currentTarget.style.color = '#059669'; }}
+                      onMouseOut={(e) => { e.currentTarget.style.borderColor = '#D1D5DB'; e.currentTarget.style.color = '#6B7280'; }}
+                      onClick={() => upField('abonos', [...(form.abonos || []), { monto: '', nota: '', fecha: new Date().toISOString().split('T')[0] }])}>
+                      + Agregar abono
+                    </button>
+
+                    {/* Resumen de cobro */}
+                    {costoCalculado > 0 && (
+                      <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #E8E8ED' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', background: '#F8F9FA' }}>
+                          {[
+                            { label: 'Total a cobrar',  value: fmt(costoCalculado), color: '#1A1A2E' },
+                            { label: 'Total abonado',   value: fmt(totalAbonado),   color: '#059669' },
+                            { label: faltante > 0 ? '⚠️ Saldo pendiente' : '✓ Pagado', value: fmt(faltante), color: faltante > 0 ? '#DC2626' : '#059669' },
+                          ].map((k) => (
+                            <div key={k.label} style={{ padding: '10px 14px', borderRight: '1px solid #E8E8ED' }}>
+                              <div style={{ fontSize: 10, fontWeight: 600, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 3 }}>{k.label}</div>
+                              <div style={{ fontSize: 15, fontWeight: 700, color: k.color }}>{k.value}</div>
+                            </div>
+                          ))}
+                        </div>
+                        {faltante > 0 && (
+                          <div style={{ background: '#FEF3C7', padding: '8px 14px', fontSize: 12, color: '#D97706', fontWeight: 600 }}>
+                            ⚠️ Faltan {fmt(faltante)} para completar el pago. Puedes guardar los abonos parciales, pero no podrás finalizar hasta cubrir el total.
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
                   {/* ── DESCRIPCIÓN ──────────────────────────────────────── */}
                   <div style={{ ...S.fGroup, ...S.fFull }}>
-                    <label style={S.fLabel}>Descripción *</label>
-                    <textarea style={{ ...S.fInput, minHeight: 72, resize: 'vertical', fontFamily: "'DM Sans',sans-serif" }}
+                    <label style={{ ...S.fLabel, color: triedSave && !form.descripcion ? '#DC2626' : undefined }}>Descripción *</label>
+                    <textarea style={{ ...S.fInput, minHeight: 72, resize: 'vertical', fontFamily: "'DM Sans',sans-serif", borderColor: triedSave && !form.descripcion ? '#DC2626' : undefined }}
                       placeholder="Detalle del mantenimiento..." value={form.descripcion}
                       onChange={(e) => upField('descripcion', e.target.value)} />
                   </div>
 
                   {/* ── ACCIONES ─────────────────────────────────────────── */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginTop: 20, gridColumn: '1 / -1', flexWrap: 'wrap' }}>
-                    <button style={S.btnCancel} onClick={() => setModalOpen(false)}>Cancelar</button>
+                    <button style={S.btnCancel} onClick={() => { setModalOpen(false); setModalError(''); setTriedSave(false); }}>Cancelar</button>
                     <div style={{ display: 'flex', gap: 10 }}>
-                      {/* Botón Finalizar — solo en edición, si no está finalizado y tiene permiso */}
+                      {/* Botón Finalizar/Cancelar — solo en edición, si no está finalizado y tiene permiso */}
                       {editingId && can('editar_mecanica') && form.estado !== 'Finalizado' && (
                         <button
-                          style={{ padding: '9px 20px', borderRadius: 9, border: 'none', background: 'linear-gradient(135deg,#059669,#047857)', color: '#FFF', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: "'DM Sans',sans-serif", display: 'flex', alignItems: 'center', gap: 6, opacity: saving ? 0.6 : 1 }}
+                          style={{ padding: '9px 20px', borderRadius: 9, border: 'none', background: form.estado === 'Cancelado' ? 'linear-gradient(135deg,#DC2626,#B91C1C)' : 'linear-gradient(135deg,#059669,#047857)', color: '#FFF', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: "'DM Sans',sans-serif", display: 'flex', alignItems: 'center', gap: 6, opacity: saving ? 0.6 : 1 }}
                           disabled={saving}
                           onClick={async () => {
-                            // Guardar primero los cambios, luego finalizar
-                            if (!form.cedula || !form.placa || !form.vehiculo || !form.descripcion) return;
+                            setTriedSave(true);
+                            const msg = validateForm();
+                            if (msg) { setModalError(msg); return; }
+
+                            // Si no es Cancelado, verificar que el total esté abonado
+                            if (form.estado !== 'Cancelado' && costoCalculado > 0 && totalAbonado < costoCalculado) {
+                              setModalError(`Faltan ${fmt(faltante)} para completar el pago. Registra el abono completo antes de finalizar.`);
+                              return;
+                            }
+
+                            setModalError('');
                             try {
                               setSaving(true);
-                              // 1. Guardar cambios actuales
                               const bodyEdit = {
                                 ...form,
                                 kilometraje: Number(form.kilometraje) || 0,
@@ -1309,35 +1426,44 @@ export default function ConsultarMantenimientos() {
                                 servicios: (form.servicios || [])
                                   .filter(s => s.nombre && s.nombre.trim())
                                   .map(s => ({ ...s, precio: Number(s.precio) || 0 })),
+                                abonos: (form.abonos || [])
+                                  .filter(a => Number(a.monto) > 0)
+                                  .map(a => ({ ...a, monto: Number(a.monto) })),
                               };
                               const rEdit = await fetch(`${API_URL}/mecanica/${editingId}`, {
                                 method: 'PUT', headers: authHeaders(), body: JSON.stringify(bodyEdit),
                               });
                               const jEdit = await rEdit.json();
                               if (!rEdit.ok) throw new Error(jEdit.msg || 'Error al guardar');
-                              // 2. Finalizar → crea Movimiento en el back
-                              const rFin = await fetch(`${API_URL}/mecanica/${editingId}/finalizar`, {
-                                method: 'PATCH', headers: authHeaders(),
-                              });
-                              const jFin = await rFin.json();
-                              if (!rFin.ok) throw new Error(jFin.msg || 'Error al finalizar');
+
+                              // Si está Cancelado, solo guardar — no crear movimiento de ingreso
+                              if (form.estado !== 'Cancelado') {
+                                const rFin = await fetch(`${API_URL}/mecanica/${editingId}/finalizar`, {
+                                  method: 'PATCH', headers: authHeaders(),
+                                });
+                                const jFin = await rFin.json();
+                                if (!rFin.ok) throw new Error(jFin.msg || 'Error al finalizar');
+                              }
+
                               setModalOpen(false);
                               setForm(EMPTY_FORM);
                               setEditingId(null);
+                              setTriedSave(false);
+                              setModalError('');
                               fetchData();
                             } catch (e) {
-                              setError(e.message);
+                              setModalError(e.message);
                             } finally {
                               setSaving(false);
                             }
                           }}>
-                          {saving ? '⏳ Procesando...' : '✓ Guardar y Finalizar'}
+                          {saving ? '⏳ Procesando...' : form.estado === 'Cancelado' ? '✕ Guardar como Cancelado' : '✓ Guardar y Finalizar'}
                         </button>
                       )}
                       <button
-                        style={{ ...S.btnPrimary, opacity: (!form.cedula || !form.placa || !form.vehiculo || !form.descripcion || saving) ? 0.5 : 1 }}
+                        style={{ ...S.btnPrimary, opacity: saving ? 0.5 : 1 }}
                         onClick={handleSave}
-                        disabled={!form.cedula || !form.placa || !form.vehiculo || !form.descripcion || saving}>
+                        disabled={saving}>
                         {saving ? '⏳ Guardando...' : (editingId ? 'Guardar cambios' : 'Crear registro')}
                       </button>
                     </div>

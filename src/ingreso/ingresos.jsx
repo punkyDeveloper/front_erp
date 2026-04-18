@@ -360,7 +360,7 @@ export default function Ingresos() {
                     <th>Descripción</th>
                     <th>Creado por</th>
                     <th style={{ textAlign: "right" }}>Valor</th>
-                    {showAcciones && <th>Acciones</th>}
+                    <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -376,18 +376,14 @@ export default function Ingresos() {
                       <td style={{ textAlign: "right", fontWeight: 700, color: "#10b981", fontVariantNumeric: "tabular-nums" }}>
                         {fCOP(d.valor)}
                       </td>
-                      {showAcciones && (
-                        <td>
-                          <div className="actions">
-                            {puedeEditar && (
-                              <button className="btn-sm btn-edit" onClick={() => openEdit(d)}>✏️</button>
-                            )}
-                            {puedeEliminar && (
-                              <button className="btn-sm btn-del" onClick={() => setDeleteTarget(d)}>🗑️</button>
-                            )}
-                          </div>
-                        </td>
-                      )}
+                      <td>
+                        <div className="actions">
+                          {puedeEditar && (
+                            <button className="btn-sm btn-edit" onClick={() => openEdit(d)}>✏️</button>
+                          )}
+                          <button className="btn-sm btn-del" onClick={() => setDeleteTarget(d)}>🗑️</button>
+                        </div>
+                      </td>
                     </tr>
                   )) : (
                     <tr>

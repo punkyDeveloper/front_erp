@@ -212,7 +212,70 @@ const modalCSS = `
   .cred-box .cred-row:last-child { margin-bottom: 0; }
   .cred-box .cred-row i { color: #6366f1; width: 16px; }
   .cred-box .cred-row strong { color: #1e1e2d; }
+
+  /* Validación inline */
+  .reg-field input.input-error,
+  .reg-field select.input-error {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239,68,68,0.1);
+  }
+
+  .reg-field input.input-ok,
+  .reg-field select.input-ok {
+    border-color: #10b981;
+  }
+
+  .field-error-msg {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 5px;
+    font-size: 0.76rem;
+    color: #ef4444;
+    font-weight: 500;
+  }
+
+  .field-error-msg i { font-size: 0.7rem; }
 `;
+
+function getCompaniaFromToken() {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) return '';
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.compania || '';
+  } catch {
+    return '';
+  }
+}
+
+const VALIDACIONES = {
+  email: (v) => {
+    if (!v) return "El correo es obligatorio";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return "Formato de correo inválido (ej: nombre@dominio.com)";
+    return "";
+  },
+  user: (v) => {
+    if (!v) return "El nombre de usuario es obligatorio";
+    if (v.length < 3) return "Mínimo 3 caracteres";
+    if (v.length > 30) return "Máximo 30 caracteres";
+    if (!/^[a-zA-Z0-9_.-]+$/.test(v)) return "Solo letras, números y los símbolos: _ . -";
+    return "";
+  },
+  name: (v) => {
+    if (!v) return "El nombre es obligatorio";
+    if (v.trim().length < 2) return "Mínimo 2 caracteres";
+    if (v.trim().length > 50) return "Máximo 50 caracteres";
+    return "";
+  },
+  apellido: (v) => {
+    if (!v) return "El apellido es obligatorio";
+    if (v.trim().length < 2) return "Mínimo 2 caracteres";
+    if (v.trim().length > 50) return "Máximo 50 caracteres";
+    return "";
+  },
+  rol: (v) => (!v ? "Debes seleccionar un rol" : ""),
+};
 
 function RegistrarTrabajador({ onCreated }) {
   const [show, setShow] = useState(false);
@@ -224,6 +287,9 @@ function RegistrarTrabajador({ onCreated }) {
   const [selectedRol, setSelectedRol] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
 
   const [showSuccess, setShowSuccess] = useState(false);
   const [generatedPassword, setGeneratedPassword] = useState("");
@@ -256,11 +322,42 @@ function RegistrarTrabajador({ onCreated }) {
   const resetForm = () => {
     setEmail(""); setUser(""); setName(""); setApellido("");
     setSelectedRol(roles.length > 0 ? roles[0]._id : "");
+    setErrors({}); setTouched({});
+  };
+
+  const validateField = (campo, valor) => {
+    const fn = VALIDACIONES[campo];
+    return fn ? fn(valor) : "";
+  };
+
+  const handleBlur = (campo, valor) => {
+    setTouched(prev => ({ ...prev, [campo]: true }));
+    setErrors(prev => ({ ...prev, [campo]: validateField(campo, valor) }));
+  };
+
+  const handleChange = (campo, setter) => (e) => {
+    setter(e.target.value);
+    if (touched[campo]) {
+      setErrors(prev => ({ ...prev, [campo]: validateField(campo, e.target.value) }));
+    }
+  };
+
+  const validateAll = () => {
+    const current = {
+      email: VALIDACIONES.email(email),
+      user: VALIDACIONES.user(user),
+      name: VALIDACIONES.name(name),
+      apellido: VALIDACIONES.apellido(apellido),
+      rol: VALIDACIONES.rol(selectedRol),
+    };
+    setErrors(current);
+    setTouched({ email: true, user: true, name: true, apellido: true, rol: true });
+    return Object.values(current).every(e => !e);
   };
 
   const handleSave = async (e) => {
     e.preventDefault();
-    if (!selectedRol) { alert("Selecciona un rol"); return; }
+    if (!validateAll()) return;
 
     setIsSaving(true);
     try {
@@ -275,23 +372,43 @@ function RegistrarTrabajador({ onCreated }) {
         body: JSON.stringify({
           email, user, name, apellido,
           rol_id: selectedRol,
-          compania: "68c46f3eb4a657d3e15fa56e",
+          compania: getCompaniaFromToken(),
         }),
       });
 
       const data = await response.json();
 
-      if (data.email) {
-        setObtenerCorreo(data.email);
-        setGeneratedPassword(data.password || "Enviada al correo");
-        setShowSuccess(true);
+      if (!response.ok) {
+        // Si el backend devuelve errores por campo (express-validator)
+        if (data.errors && Array.isArray(data.errors)) {
+          const backendErrors = {};
+          data.errors.forEach(err => {
+            const campo = err.path || err.param;
+            const map = { name: 'name', apellido: 'apellido', email: 'email', user: 'user', rol_id: 'rol' };
+            if (map[campo]) backendErrors[map[campo]] = err.msg;
+          });
+          setErrors(prev => ({ ...prev, ...backendErrors }));
+          setTouched({ email: true, user: true, name: true, apellido: true, rol: true });
+        } else {
+          const campo = data.msg || data.message || "Error al registrar";
+          if (campo.toLowerCase().includes('correo')) {
+            setErrors(prev => ({ ...prev, email: campo }));
+            setTouched(prev => ({ ...prev, email: true }));
+          } else {
+            setErrors(prev => ({ ...prev, _general: campo }));
+          }
+        }
+        return;
       }
 
+      setObtenerCorreo(data.email);
+      setGeneratedPassword(data.password || "Enviada al correo");
       setShow(false);
       resetForm();
       if (onCreated) onCreated();
+      setShowSuccess(true);
     } catch {
-      alert("Error al registrar el trabajador");
+      setErrors(prev => ({ ...prev, _general: "Error de conexión. Verifica tu red." }));
     } finally {
       setIsSaving(false);
     }
@@ -317,8 +434,14 @@ function RegistrarTrabajador({ onCreated }) {
               </button>
             </div>
 
-            <form onSubmit={handleSave}>
+            <form onSubmit={handleSave} noValidate>
               <div className="reg-modal-body">
+
+                {errors._general && (
+                  <div style={{ background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.25)', borderRadius:8, padding:'9px 13px', marginBottom:14, fontSize:'0.82rem', color:'#ef4444', display:'flex', gap:7, alignItems:'center' }}>
+                    <i className="fas fa-circle-exclamation"></i> {errors._general}
+                  </div>
+                )}
 
                 <div className="reg-field">
                   <label>Correo electrónico</label>
@@ -326,9 +449,13 @@ function RegistrarTrabajador({ onCreated }) {
                     type="email"
                     placeholder="ejemplo@correo.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
+                    className={touched.email ? (errors.email ? 'input-error' : 'input-ok') : ''}
+                    onChange={handleChange('email', setEmail)}
+                    onBlur={() => handleBlur('email', email)}
                   />
+                  {touched.email && errors.email && (
+                    <span className="field-error-msg"><i className="fas fa-circle-exclamation"></i>{errors.email}</span>
+                  )}
                 </div>
 
                 <div className="reg-field">
@@ -337,9 +464,13 @@ function RegistrarTrabajador({ onCreated }) {
                     type="text"
                     placeholder="usuario123"
                     value={user}
-                    onChange={(e) => setUser(e.target.value)}
-                    required
+                    className={touched.user ? (errors.user ? 'input-error' : 'input-ok') : ''}
+                    onChange={handleChange('user', setUser)}
+                    onBlur={() => handleBlur('user', user)}
                   />
+                  {touched.user && errors.user && (
+                    <span className="field-error-msg"><i className="fas fa-circle-exclamation"></i>{errors.user}</span>
+                  )}
                 </div>
 
                 <div className="reg-row">
@@ -349,9 +480,13 @@ function RegistrarTrabajador({ onCreated }) {
                       type="text"
                       placeholder="Juan"
                       value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
+                      className={touched.name ? (errors.name ? 'input-error' : 'input-ok') : ''}
+                      onChange={handleChange('name', setName)}
+                      onBlur={() => handleBlur('name', name)}
                     />
+                    {touched.name && errors.name && (
+                      <span className="field-error-msg"><i className="fas fa-circle-exclamation"></i>{errors.name}</span>
+                    )}
                   </div>
                   <div className="reg-field">
                     <label>Apellido</label>
@@ -359,9 +494,13 @@ function RegistrarTrabajador({ onCreated }) {
                       type="text"
                       placeholder="Pérez"
                       value={apellido}
-                      onChange={(e) => setApellido(e.target.value)}
-                      required
+                      className={touched.apellido ? (errors.apellido ? 'input-error' : 'input-ok') : ''}
+                      onChange={handleChange('apellido', setApellido)}
+                      onBlur={() => handleBlur('apellido', apellido)}
                     />
+                    {touched.apellido && errors.apellido && (
+                      <span className="field-error-msg"><i className="fas fa-circle-exclamation"></i>{errors.apellido}</span>
+                    )}
                   </div>
                 </div>
 
@@ -370,20 +509,27 @@ function RegistrarTrabajador({ onCreated }) {
                   <select
                     disabled={isLoading}
                     value={selectedRol}
-                    onChange={(e) => setSelectedRol(e.target.value)}
-                    required
+                    className={touched.rol ? (errors.rol ? 'input-error' : 'input-ok') : ''}
+                    onChange={(e) => {
+                      setSelectedRol(e.target.value);
+                      if (touched.rol) setErrors(prev => ({ ...prev, rol: VALIDACIONES.rol(e.target.value) }));
+                    }}
+                    onBlur={() => handleBlur('rol', selectedRol)}
                   >
                     <option value="">Seleccione un rol</option>
                     {roles.map((rol) => (
                       <option key={rol._id} value={rol._id}>{rol.rol}</option>
                     ))}
                   </select>
+                  {touched.rol && errors.rol && (
+                    <span className="field-error-msg"><i className="fas fa-circle-exclamation"></i>{errors.rol}</span>
+                  )}
                 </div>
 
               </div>
 
               <div className="reg-modal-footer">
-                <button type="button" className="reg-btn reg-btn-secondary" onClick={() => setShow(false)}>
+                <button type="button" className="reg-btn reg-btn-secondary" onClick={() => { setShow(false); resetForm(); }}>
                   Cancelar
                 </button>
                 <button type="submit" className="reg-btn reg-btn-primary" disabled={isSaving}>
@@ -408,7 +554,7 @@ function RegistrarTrabajador({ onCreated }) {
                 <i className="fas fa-envelope"></i>
                 Correo: <strong>{obtenerCorreo}</strong>
               </div>
-              {generatedPassword && generatedPassword !== "Enviada al correo" && (
+              {generatedPassword && (
                 <div className="cred-row">
                   <i className="fas fa-key"></i>
                   Contraseña: <strong>{generatedPassword}</strong>

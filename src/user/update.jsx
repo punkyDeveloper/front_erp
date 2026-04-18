@@ -300,13 +300,67 @@ const updateCSS = `
 
   .upd-footer-btn.primary:hover { opacity: 0.9; transform: translateY(-1px); }
   .upd-footer-btn.primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  .upd-field input.input-error,
+  .upd-field select.input-error { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,0.1); }
+  .upd-field input.input-ok,
+  .upd-field select.input-ok { border-color: #10b981; }
+  .upd-field-error {
+    display: flex; align-items: center; gap: 5px;
+    margin-top: 5px; font-size: 0.76rem; color: #ef4444; font-weight: 500;
+  }
+  .upd-field-error i { font-size: 0.7rem; }
+
+  .upd-toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 22px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    animation: toastIn 0.25s ease;
+    white-space: nowrap;
+  }
+
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+
+  .upd-toast.success {
+    background: #10b981;
+    color: #fff;
+  }
+
+  .upd-toast.error {
+    background: #ef4444;
+    color: #fff;
+  }
 `;
+
+const UPD_VALIDACIONES = {
+  name:     (v) => !v || v.trim().length < 2 ? "Mínimo 2 caracteres" : v.trim().length > 50 ? "Máximo 50 caracteres" : "",
+  apellido: (v) => !v || v.trim().length < 2 ? "Mínimo 2 caracteres" : v.trim().length > 50 ? "Máximo 50 caracteres" : "",
+  email:    (v) => !v ? "El correo es obligatorio" : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? "Formato inválido (ej: nombre@dominio.com)" : "",
+  user:     (v) => !v ? "Obligatorio" : v.length < 3 ? "Mínimo 3 caracteres" : v.length > 30 ? "Máximo 30 caracteres" : !/^[a-zA-Z0-9_.-]+$/.test(v) ? "Solo letras, números y _ . -" : "",
+  rol_id:   (v) => !v ? "Debes seleccionar un rol" : "",
+};
 
 function UpdateUser({ userId, usuario, onUpdated }) {
   const [show, setShow] = useState(false);
   const [formData, setFormData] = useState(null);
   const [roles, setRoles] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [touched, setTouched] = useState({});
 
   // Contraseña
   const [showPwdSection, setShowPwdSection] = useState(false);
@@ -337,20 +391,12 @@ function UpdateUser({ userId, usuario, onUpdated }) {
 
   useEffect(() => {
     if (usuario) {
-      let rolNombre = "";
-      if (usuario.rol) {
-        if (typeof usuario.rol === "object" && usuario.rol.rol) {
-          rolNombre = usuario.rol.rol;
-        } else if (typeof usuario.rol === "string") {
-          rolNombre = usuario.rol;
-        }
-      }
       setFormData({
         name: usuario.nombre || "",
         apellido: usuario.apellido || "",
         user: usuario.user || "",
         email: usuario.email || "",
-        rol_id: rolNombre || "",
+        rol_id: usuario.rol || "",
         compania: usuario.compania || "",
         estado: usuario.estado ?? true,
       });
@@ -359,7 +405,18 @@ function UpdateUser({ userId, usuario, onUpdated }) {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+    const newVal = type === "checkbox" ? checked : value;
+    setFormData((prev) => ({ ...prev, [name]: newVal }));
+    if (touched[name] && UPD_VALIDACIONES[name]) {
+      setFieldErrors(prev => ({ ...prev, [name]: UPD_VALIDACIONES[name](newVal) }));
+    }
+  };
+
+  const handleBlur = (campo) => {
+    setTouched(prev => ({ ...prev, [campo]: true }));
+    if (UPD_VALIDACIONES[campo]) {
+      setFieldErrors(prev => ({ ...prev, [campo]: UPD_VALIDACIONES[campo](formData?.[campo] ?? '') }));
+    }
   };
 
   const handleClose = () => {
@@ -367,19 +424,33 @@ function UpdateUser({ userId, usuario, onUpdated }) {
     setShowPwdSection(false);
     setNewPassword("");
     setConfirmPassword("");
+    setFieldErrors({});
+    setTouched({});
   };
 
   const handleUpdate = async (e) => {
     e.preventDefault();
     if (!formData) return;
 
+    // Validar campos generales
+    const campos = ['name', 'apellido', 'email', 'user', 'rol_id'];
+    const newErrors = {};
+    const newTouched = {};
+    campos.forEach(c => {
+      newTouched[c] = true;
+      newErrors[c] = UPD_VALIDACIONES[c] ? UPD_VALIDACIONES[c](formData?.[c] ?? '') : '';
+    });
+    setTouched(prev => ({ ...prev, ...newTouched }));
+    setFieldErrors(prev => ({ ...prev, ...newErrors }));
+    if (Object.values(newErrors).some(e => e)) return;
+
     if (showPwdSection && newPassword) {
       if (newPassword.length < 8) {
-        alert("La contraseña debe tener al menos 8 caracteres.");
+        showToast("error", "La contraseña debe tener al menos 8 caracteres.");
         return;
       }
       if (newPassword !== confirmPassword) {
-        alert("Las contraseñas no coinciden.");
+        showToast("error", "Las contraseñas no coinciden.");
         return;
       }
     }
@@ -407,16 +478,29 @@ function UpdateUser({ userId, usuario, onUpdated }) {
 
       handleClose();
       if (onUpdated) onUpdated();
+      showToast("success", "Trabajador actualizado exitosamente.");
     } catch (error) {
-      alert("No se pudo actualizar: " + error.message);
+      showToast("error", "No se pudo actualizar: " + error.message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const showToast = (type, msg) => {
+    setToast({ type, msg });
+    setTimeout(() => setToast(null), 3500);
+  };
+
   return (
     <>
       <style>{updateCSS}</style>
+
+      {toast && (
+        <div className={`upd-toast ${toast.type}`}>
+          <i className={`fas fa-${toast.type === 'success' ? 'circle-check' : 'circle-xmark'}`}></i>
+          {toast.msg}
+        </div>
+      )}
 
       <button className="upd-btn upd-btn-edit" onClick={() => setShow(true)}>
         <i className="fas fa-pen"></i> Editar
@@ -448,33 +532,48 @@ function UpdateUser({ userId, usuario, onUpdated }) {
                   <div className="upd-row">
                     <div className="upd-field">
                       <label>Nombre</label>
-                      <input type="text" name="name" value={formData.name} onChange={handleChange} required />
+                      <input type="text" name="name" value={formData.name}
+                        className={touched.name ? (fieldErrors.name ? 'input-error' : 'input-ok') : ''}
+                        onChange={handleChange} onBlur={() => handleBlur('name')} />
+                      {touched.name && fieldErrors.name && <span className="upd-field-error"><i className="fas fa-circle-exclamation"></i>{fieldErrors.name}</span>}
                     </div>
                     <div className="upd-field">
                       <label>Apellido</label>
-                      <input type="text" name="apellido" value={formData.apellido} onChange={handleChange} required />
+                      <input type="text" name="apellido" value={formData.apellido}
+                        className={touched.apellido ? (fieldErrors.apellido ? 'input-error' : 'input-ok') : ''}
+                        onChange={handleChange} onBlur={() => handleBlur('apellido')} />
+                      {touched.apellido && fieldErrors.apellido && <span className="upd-field-error"><i className="fas fa-circle-exclamation"></i>{fieldErrors.apellido}</span>}
                     </div>
                   </div>
 
                   <div className="upd-field">
                     <label>Usuario</label>
-                    <input type="text" name="user" value={formData.user} onChange={handleChange} required />
+                    <input type="text" name="user" value={formData.user}
+                      className={touched.user ? (fieldErrors.user ? 'input-error' : 'input-ok') : ''}
+                      onChange={handleChange} onBlur={() => handleBlur('user')} />
+                    {touched.user && fieldErrors.user && <span className="upd-field-error"><i className="fas fa-circle-exclamation"></i>{fieldErrors.user}</span>}
                   </div>
 
                   <div className="upd-field">
                     <label>Correo electrónico</label>
-                    <input type="email" name="email" value={formData.email} onChange={handleChange} required />
+                    <input type="email" name="email" value={formData.email}
+                      className={touched.email ? (fieldErrors.email ? 'input-error' : 'input-ok') : ''}
+                      onChange={handleChange} onBlur={() => handleBlur('email')} />
+                    {touched.email && fieldErrors.email && <span className="upd-field-error"><i className="fas fa-circle-exclamation"></i>{fieldErrors.email}</span>}
                   </div>
 
                   <div className="upd-row">
                     <div className="upd-field">
                       <label>Rol</label>
-                      <select name="rol_id" value={formData.rol_id} onChange={handleChange} required>
+                      <select name="rol_id" value={formData.rol_id}
+                        className={touched.rol_id ? (fieldErrors.rol_id ? 'input-error' : 'input-ok') : ''}
+                        onChange={handleChange} onBlur={() => handleBlur('rol_id')}>
                         <option value="">Seleccione un rol</option>
                         {roles.map((r) => (
                           <option key={r._id} value={r.rol}>{r.rol}</option>
                         ))}
                       </select>
+                      {touched.rol_id && fieldErrors.rol_id && <span className="upd-field-error"><i className="fas fa-circle-exclamation"></i>{fieldErrors.rol_id}</span>}
                     </div>
                     <div className="upd-field">
                       <label>Estado</label>
