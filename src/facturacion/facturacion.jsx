@@ -226,12 +226,10 @@ const FacturaDetalle = ({ factura, puedeAnular, onCerrar, onAnulada }) => {
                       <span className="text-muted">Subtotal</span>
                       <span>{formatMoney(factura.subtotal)}</span>
                     </div>
-                    {factura.impuesto > 0 && (
-                      <div className="d-flex justify-content-between small mb-1">
-                        <span className="text-muted">IVA ({factura.impuesto}%)</span>
-                        <span>{formatMoney(factura.totalImpuesto)}</span>
-                      </div>
-                    )}
+                    <div className="d-flex justify-content-between small mb-1">
+                      <span className="text-muted">IVA ({factura.impuesto || 0}%)</span>
+                      <span>{formatMoney(factura.impuesto > 0 ? factura.totalImpuesto : 0)}</span>
+                    </div>
                     <hr className="my-2" />
                     <div className="d-flex justify-content-between fw-bold">
                       <span>Total</span>

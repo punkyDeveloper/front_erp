@@ -76,7 +76,7 @@ const generarFactura = (item) => {
 
   const stServ = (item.servicios || []).reduce((s, x) => s + (x.precio || 0), 0);
   const stProd = (item.productos || []).reduce((s, p) => s + ((p.precioVenta || 0) * (p.cantidad || 1)), 0);
-  const iva    = Math.round((stServ + stProd) * 0.19);
+  // const iva    = Math.round((stServ + stProd) * 0.19);
 
   const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/><title>Factura ${escHtml(num)}</title>
 <style>@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap');
@@ -111,7 +111,7 @@ th:nth-child(2){text-align:center;}th:nth-child(3){text-align:center;}th:last-ch
     <div class="tots">
       <div class="tr"><span>Subtotal mano de obra</span><span>${fmt(stServ)}</span></div>
       <div class="tr"><span>Subtotal repuestos</span><span>${fmt(stProd)}</span></div>
-      <div class="tr"><span>IVA (19%)</span><span>${fmt(iva)}</span></div>
+      <div class="tr"><span>IVA (19%)</span><span>0</span></div>
       <div class="tr main"><span>TOTAL</span><span>${fmt(item.costoCliente || 0)}</span></div>
     </div>
   </div>
@@ -1407,13 +1407,6 @@ export default function ConsultarMantenimientos() {
                             setTriedSave(true);
                             const msg = validateForm();
                             if (msg) { setModalError(msg); return; }
-
-                            // Si no es Cancelado, verificar que el total esté abonado
-                            if (form.estado !== 'Cancelado' && costoCalculado > 0 && totalAbonado < costoCalculado) {
-                              setModalError(`Faltan ${fmt(faltante)} para completar el pago. Registra el abono completo antes de finalizar.`);
-                              return;
-                            }
-
                             setModalError('');
                             try {
                               setSaving(true);
