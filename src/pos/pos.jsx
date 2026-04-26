@@ -370,6 +370,7 @@ export default function Pos() {
       setVentaActual(data.data || data.venta || data);
       setDirty(false);
       msg("Borrador guardado");
+      cargarProductos();
     } catch (e) {
       msg("Error al guardar: " + e.message, "err");
     } finally {
@@ -427,6 +428,7 @@ export default function Pos() {
       msg("Venta finalizada correctamente");
       setModalPago(false);
       setModalFactura(true);
+      cargarProductos();
     } catch (e) {
       msg("Error al finalizar: " + e.message, "err");
     } finally {
@@ -763,6 +765,10 @@ ${facturaData.notas ? `<p style="margin-top:12px;font-size:11px;color:#666">Nota
                   />
                   {showClienteDD && (
                     <div style={{ position:"absolute", top:"100%", left:0, right:0, background:"#fff", border:"1px solid var(--gr3)", borderRadius:8, boxShadow:"var(--sh2)", zIndex:200, maxHeight:220, overflowY:"auto" }}>
+                      <div style={{ padding:"9px 12px", cursor:"pointer", fontSize:13, color:"var(--az)", fontWeight:600, display:"flex", alignItems:"center", gap:6, borderBottom:"2px solid var(--az4)", background:"var(--az3)" }}
+                        onMouseDown={() => { setShowClienteDD(false); setModalNuevoCliente(true); }}>
+                        ➕ Crear nuevo cliente
+                      </div>
                       {clientesFiltrados.length === 0 && buscarCliente && (
                         <div style={{ padding:"9px 12px", fontSize:13, color:"var(--gr)" }}>Sin resultados</div>
                       )}
@@ -774,10 +780,6 @@ ${facturaData.notas ? `<p style="margin-top:12px;font-size:11px;color:#666">Nota
                           {c.numeroDocumento && <span style={{ color:"var(--gr)", fontSize:11 }}>{c.tipoDocumento}: {c.numeroDocumento}</span>}
                         </div>
                       ))}
-                      <div style={{ padding:"9px 12px", cursor:"pointer", fontSize:13, color:"var(--az)", fontWeight:600, display:"flex", alignItems:"center", gap:6 }}
-                        onMouseDown={() => { setShowClienteDD(false); setModalNuevoCliente(true); }}>
-                        ➕ Crear nuevo cliente
-                      </div>
                     </div>
                   )}
                 </>

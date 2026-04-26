@@ -132,7 +132,7 @@ const CSS = `
 
 /* ─── Valor vacío para form ──────────────────────────────────────────────── */
 const VACIO = {
-  name: "", description: "", price: "", stock: "",
+  name: "", description: "", precio_costo: "", price: "", stock: "",
   venta: false, alquiler: false,
 };
 
@@ -246,12 +246,13 @@ export default function Productos() {
   const abrirEditar = (p) => {
     setSel(p);
     setForm({
-      name:        p.name        || "",
-      description: p.description || "",
-      price:       p.price       ?? "",
-      stock:       p.stock       ?? "",
-      venta:       !!p.venta,
-      alquiler:    !!p.alquiler,
+      name:         p.name         || "",
+      description:  p.description  || "",
+      precio_costo: p.precio_costo ?? "",
+      price:        p.price        ?? "",
+      stock:        p.stock        ?? "",
+      venta:        !!p.venta,
+      alquiler:     !!p.alquiler,
     });
     setImagenFile(null);
     setPreviewUrl(p.img || null);
@@ -274,10 +275,11 @@ export default function Productos() {
   /* ── Validar form ── */
   const validar = () => {
     const e = {};
-    if (!form.name.trim())              e.name        = "Requerido";
-    if (!form.description.trim())       e.description = "Requerido";
-    if (!form.price || isNaN(form.price)) e.price     = "Precio inválido";
-    if (form.stock === "" || isNaN(form.stock)) e.stock = "Stock inválido";
+    if (!form.name.trim())                                           e.name         = "Requerido";
+    if (!form.description.trim())                                    e.description  = "Requerido";
+    if (form.precio_costo !== "" && isNaN(form.precio_costo))        e.precio_costo = "Valor inválido";
+    if (!form.price || isNaN(form.price))                            e.price        = "Precio inválido";
+    if (form.stock === "" || isNaN(form.stock))                      e.stock        = "Stock inválido";
     setErr(e);
     return Object.keys(e).length === 0;
   };
@@ -289,12 +291,13 @@ export default function Productos() {
     setGuardando(true);
     try {
       const fd = new FormData();
-      fd.append("name",        form.name.trim());
-      fd.append("description", form.description.trim());
-      fd.append("price",       String(form.price));
-      fd.append("stock",       String(form.stock));
-      fd.append("venta",       String(form.venta));
-      fd.append("alquiler",    String(form.alquiler));
+      fd.append("name",         form.name.trim());
+      fd.append("description",  form.description.trim());
+      fd.append("precio_costo", form.precio_costo !== "" ? String(form.precio_costo) : "0");
+      fd.append("price",        String(form.price));
+      fd.append("stock",        String(form.stock));
+      fd.append("venta",        String(form.venta));
+      fd.append("alquiler",     String(form.alquiler));
       if (imagenFile) fd.append("img", imagenFile);
 
       const res = await fetch(`${API_URL}/productos`, {
@@ -322,12 +325,13 @@ export default function Productos() {
     setGuardando(true);
     try {
       const fd = new FormData();
-      fd.append("name",        form.name.trim());
-      fd.append("description", form.description.trim());
-      fd.append("price",       String(form.price));
-      fd.append("stock",       String(form.stock));
-      fd.append("venta",       String(form.venta));
-      fd.append("alquiler",    String(form.alquiler));
+      fd.append("name",         form.name.trim());
+      fd.append("description",  form.description.trim());
+      fd.append("precio_costo", form.precio_costo !== "" ? String(form.precio_costo) : "0");
+      fd.append("price",        String(form.price));
+      fd.append("stock",        String(form.stock));
+      fd.append("venta",        String(form.venta));
+      fd.append("alquiler",     String(form.alquiler));
       if (imagenFile) fd.append("img", imagenFile);
 
       const res = await fetch(`${API_URL}/productos/${sel._id || sel.id}`, {
@@ -405,7 +409,20 @@ export default function Productos() {
         </div>
 
         <div className="ig">
-          <label>Precio *</label>
+          <label>Precio de costo</label>
+          <input
+            className={`ic ${err.precio_costo ? "err" : ""}`}
+            type="number" step="0.01" min="0"
+            placeholder="0.00"
+            value={form.precio_costo}
+            onChange={(e) => setF("precio_costo", e.target.value)}
+            disabled={guardando}
+          />
+          {err.precio_costo && <span className="em">{err.precio_costo}</span>}
+        </div>
+
+        <div className="ig">
+          <label>Precio de venta *</label>
           <input
             className={`ic ${err.price ? "err" : ""}`}
             type="number" step="0.01" min="0"
@@ -552,7 +569,8 @@ export default function Productos() {
                     <th>Imagen</th>
                     <th>Nombre</th>
                     <th>Descripción</th>
-                    <th>Precio</th>
+                    <th>P. Costo</th>
+                    <th>P. Venta</th>
                     <th>Stock</th>
                     <th>Venta</th>
                     <th>Alquiler</th>
@@ -576,6 +594,9 @@ export default function Productos() {
                         <span style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                           {p.description}
                         </span>
+                      </td>
+                      <td style={{ color: "#64748B" }}>
+                        {p.precio_costo ? `$${fmt(p.precio_costo)}` : "—"}
                       </td>
                       <td style={{ fontWeight: 600, color: "#059669" }}>
                         ${fmt(p.price)}
