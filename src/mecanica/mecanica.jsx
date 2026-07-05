@@ -133,16 +133,21 @@ const generarOrden = (item) => {
   let   companyNombre = '';
   try { const u = JSON.parse(localStorage.getItem('user') || '{}'); companyNombre = u.nombreCompany || ''; } catch {}
 
-  const sRows = (item.servicios || []).map((s, i) =>
-    `<tr><td style="padding:12px 10px;border-bottom:1px solid #F0F0F5;font-size:13px;">
-       <div style="display:flex;align-items:center;gap:8px;">
-         <div style="width:20px;height:20px;border-radius:50%;background:#EEF2FF;color:#4338CA;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;">${i+1}</div>
-         🔧 ${escHtml(s.nombre)}
+  const sRows = (item.servicios || []).map((s, i) => {
+    const pasosHtml = (s.pasos && s.pasos.length > 0)
+      ? `<div style="margin-top:6px;padding-left:4px;border-left:2px solid #C7D2FE;">${s.pasos.map((p, pi) =>
+          `<div style="font-size:10px;color:#4B5563;padding:2px 0 2px 7px;"><span style="color:#4338CA;font-weight:700;margin-right:5px;">${pi+1}.</span>${escHtml(p.descripcion)}</div>`
+        ).join('')}</div>`
+      : '';
+    return `<tr><td style="padding:12px 10px;border-bottom:1px solid #F0F0F5;font-size:13px;">
+       <div style="display:flex;align-items:flex-start;gap:8px;">
+         <div style="width:20px;height:20px;border-radius:50%;background:#EEF2FF;color:#4338CA;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">${i+1}</div>
+         <div><div>🔧 ${escHtml(s.nombre)}</div>${pasosHtml}</div>
        </div></td>
-     <td style="padding:12px 10px;border-bottom:1px solid #F0F0F5;font-size:11px;color:#7C3AED;font-weight:600;text-align:center;">Mano de obra</td>
-     <td style="padding:12px 10px;border-bottom:1px solid #F0F0F5;text-align:center;"><div style="width:18px;height:18px;border:2px solid #D1D5DB;border-radius:4px;display:inline-block;"></div></td>
-     <td style="padding:12px 10px;border-bottom:1px solid #F0F0F5;text-align:right;font-weight:600;font-size:13px;">${fmt(s.precio)}</td></tr>`
-  ).join('');
+     <td style="padding:12px 10px;border-bottom:1px solid #F0F0F5;font-size:11px;color:#7C3AED;font-weight:600;text-align:center;vertical-align:top;">Mano de obra</td>
+     <td style="padding:12px 10px;border-bottom:1px solid #F0F0F5;text-align:center;vertical-align:top;"><div style="width:18px;height:18px;border:2px solid #D1D5DB;border-radius:4px;display:inline-block;margin-top:1px;"></div></td>
+     <td style="padding:12px 10px;border-bottom:1px solid #F0F0F5;text-align:right;font-weight:600;font-size:13px;vertical-align:top;">${fmt(s.precio)}</td></tr>`;
+  }).join('');
 
   const pRows = (item.productos || []).map((p) =>
     `<tr><td style="padding:12px 10px;border-bottom:1px solid #F0F0F5;font-size:13px;">
@@ -670,7 +675,7 @@ export default function ConsultarMantenimientos() {
     const precioSvc = svc.precio || svc.valor || 0;
     const codigoSvc = svc.codigo || svc.code || String(svc._id || '').slice(-6).toUpperCase();
     const base = precioSvc > 0
-      ? [{ id: svc._id, codigo: codigoSvc, nombre: svc.nombre, precio: precioSvc, tipo: 'servicio' }]
+      ? [{ id: svc._id, codigo: codigoSvc, nombre: svc.nombre, precio: precioSvc, tipo: 'servicio', pasos: [] }]
       : [];
     // subservicios vienen del populate('idSupservicios')
     const subsRaw = svc.idSupservicios || svc.subServicios || svc.supServicios || [];
@@ -682,6 +687,7 @@ export default function ConsultarMantenimientos() {
         precio: sub.supvalor || sub.precio || sub.valor || 0,
         tipo: 'subservicio',
         servicioId: svc._id,
+        pasos: sub.pasos || [],
       }))
       .filter((sub) => sub.precio > 0);
     return [...base, ...subs];
@@ -694,7 +700,7 @@ export default function ConsultarMantenimientos() {
     } else {
       upField('servicios', [
         ...form.servicios,
-        { servicioId: opc.id || null, nombre: opc.nombre, precio: opc.precio },
+        { servicioId: opc.id || null, nombre: opc.nombre, precio: opc.precio, pasos: opc.pasos || [] },
       ]);
     }
   };

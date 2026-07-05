@@ -111,12 +111,16 @@ export default function ServiciosModule() {
     valor: '',
     subservicios: []
   });
-  
+
+  const [newSubPasoInput, setNewSubPasoInput]   = useState('');
+  const [editSubPasoInput, setEditSubPasoInput] = useState('');
+
 const [newSubservicio, setNewSubservicio] = useState({
   supnombre: '',
   descripcion: '',
   suptiempo: '',
-  supvalor: ''
+  supvalor: '',
+  pasos: []
 });
 
   // ═══════════════════════════════════════════════════════════
@@ -169,7 +173,8 @@ const serviciosTransformados = result.data.map(servicio => ({
     nombre: sub.supnombre || '',
     descripcion: sub.descripcion || '',
     tiempo: sub.suptiempo || '',
-    valor: sub.supvalor ?? 0
+    valor: sub.supvalor ?? 0,
+    pasos: (sub.pasos || []).map((p, i) => ({ orden: p.orden ?? i + 1, descripcion: p.descripcion || '' }))
   }))
 }));
 
@@ -339,7 +344,8 @@ const handleOpenModal = (service = null) => {
         supnombre: sub.nombre,
         suptiempo: sub.tiempo,
         supvalor: sub.valor,
-        descripcion: sub.descripcion || ''
+        descripcion: sub.descripcion || '',
+        pasos: sub.pasos || []
       }))
     });
   } else {
@@ -347,15 +353,19 @@ const handleOpenModal = (service = null) => {
     setFormData({ nombre: '', tiempo: '', valor: '', subservicios: [] });
   }
   setEditingSubId(null);
+  setNewSubPasoInput('');
+  setEditSubPasoInput('');
   setShowModal(true);
 };
 
 const handleCloseModal = () => {
   setShowModal(false);
   setEditingService(null);
-  setEditingSubId(null); // ✅
+  setEditingSubId(null);
   setFormData({ nombre: '', tiempo: '', valor: '', subservicios: [] });
-  setNewSubservicio({ supnombre: '', descripcion: '', suptiempo: '', supvalor: '' });
+  setNewSubservicio({ supnombre: '', descripcion: '', suptiempo: '', supvalor: '', pasos: [] });
+  setNewSubPasoInput('');
+  setEditSubPasoInput('');
 };
 
 const handleAddSubservicio = () => {
@@ -367,10 +377,12 @@ const handleAddSubservicio = () => {
       supnombre: newSubservicio.supnombre,
       descripcion: newSubservicio.descripcion || '',
       suptiempo: newSubservicio.suptiempo,
-      supvalor: parseFloat(newSubservicio.supvalor)
+      supvalor: parseFloat(newSubservicio.supvalor),
+      pasos: newSubservicio.pasos || []
     };
     setFormData(prev => ({ ...prev, subservicios: [...prev.subservicios, subservicio] }));
-    setNewSubservicio({ supnombre: '', descripcion: '', suptiempo: '', supvalor: '' });
+    setNewSubservicio({ supnombre: '', descripcion: '', suptiempo: '', supvalor: '', pasos: [] });
+    setNewSubPasoInput('');
   }
 };
 
@@ -395,7 +407,8 @@ const handleSaveService = async () => {
       supnombre: sub.supnombre || '',
       suptiempo: sub.suptiempo || '',
       supvalor: parseFloat(sub.supvalor) || 0,
-      descripcion: sub.descripcion || ''
+      descripcion: sub.descripcion || '',
+      pasos: (sub.pasos || []).filter(p => p.descripcion?.trim()).map((p, i) => ({ orden: i + 1, descripcion: p.descripcion.trim() }))
     }));
 
     if (editingService) {
@@ -599,6 +612,9 @@ const handleSaveService = async () => {
           .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
           .subservicios-section { border-top: 1px solid #e5e7eb; padding-top: 1rem; margin-top: 1.5rem; }
           .section-title { font-size: 1.125rem; font-weight: 600; color: #1f2937; margin-bottom: 1rem; }
+          .paso-item { display: flex; align-items: center; gap: 0.75rem; background: white; padding: 0.6rem 0.875rem; border-radius: 0.5rem; border: 1px solid #e5e7eb; margin-bottom: 0.375rem; }
+          .paso-num { width: 1.5rem; height: 1.5rem; border-radius: 50%; background: #4f46e5; color: white; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; flex-shrink: 0; }
+          .paso-desc { flex: 1; font-size: 0.875rem; color: #374151; }
           .subservicios-form { background-color: #f9fafb; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; }
           .subservicios-form input, .subservicios-form textarea { margin-bottom: 0.75rem; }
           .subservicios-form .form-row { margin-bottom: 0.75rem; }
@@ -801,6 +817,16 @@ const handleSaveService = async () => {
                                             <span className="price">${(sub.valor ?? 0).toLocaleString()}</span>
                                           </div>
                                         </div>
+                                        {sub.pasos && sub.pasos.length > 0 && (
+                                          <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #e5e7eb' }}>
+                                            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#4338CA', marginBottom: '0.25rem' }}>📋 Procedimiento:</div>
+                                            <ol style={{ paddingLeft: '1.25rem', margin: 0 }}>
+                                              {sub.pasos.map((paso, idx) => (
+                                                <li key={idx} style={{ fontSize: '0.8rem', color: '#4B5563', padding: '1px 0' }}>{paso.descripcion}</li>
+                                              ))}
+                                            </ol>
+                                          </div>
+                                        )}
                                       </div>
                                     ))}
                                   </div>
@@ -933,7 +959,49 @@ const handleSaveService = async () => {
       placeholder="Valor ($)"
     />
   </div>
-  <button onClick={handleAddSubservicio} className="btn-add-sub">
+  {/* Pasos del nuevo subservicio */}
+  <div style={{ marginTop: '0.75rem', borderTop: '1px dashed #d1d5db', paddingTop: '0.75rem' }}>
+    <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>📋 Pasos del procedimiento</div>
+    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.375rem' }}>
+      <input
+        type="text"
+        value={newSubPasoInput}
+        onChange={(e) => setNewSubPasoInput(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && newSubPasoInput.trim()) {
+            setNewSubservicio(prev => ({ ...prev, pasos: [...prev.pasos, { descripcion: newSubPasoInput.trim() }] }));
+            setNewSubPasoInput('');
+          }
+        }}
+        className="form-input"
+        placeholder="Describe el paso..."
+        style={{ flex: 1, marginBottom: 0 }}
+      />
+      <button
+        type="button"
+        onClick={() => {
+          if (!newSubPasoInput.trim()) return;
+          setNewSubservicio(prev => ({ ...prev, pasos: [...prev.pasos, { descripcion: newSubPasoInput.trim() }] }));
+          setNewSubPasoInput('');
+        }}
+        style={{ padding: '0.5rem 0.75rem', borderRadius: '0.5rem', border: 'none', background: '#4f46e5', color: 'white', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, flexShrink: 0 }}
+      >
+        + Paso
+      </button>
+    </div>
+    {newSubservicio.pasos.length > 0 && newSubservicio.pasos.map((paso, idx) => (
+      <div key={idx} className="paso-item">
+        <div className="paso-num">{idx + 1}</div>
+        <span className="paso-desc">{paso.descripcion}</span>
+        <button
+          type="button"
+          onClick={() => setNewSubservicio(prev => ({ ...prev, pasos: prev.pasos.filter((_, i) => i !== idx) }))}
+          className="btn-remove-sub"
+        ><TrashIcon /></button>
+      </div>
+    ))}
+  </div>
+  <button onClick={handleAddSubservicio} className="btn-add-sub" style={{ marginTop: '0.75rem' }}>
     <PlusIcon />
     Agregar Subservicio
   </button>
@@ -998,8 +1066,54 @@ const handleSaveService = async () => {
                 placeholder="Valor ($)"
               />
             </div>
+            {/* Pasos en modo edición */}
+            <div style={{ borderTop: '1px dashed #d1d5db', paddingTop: '0.625rem', marginBottom: '0.5rem' }}>
+              <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#374151', marginBottom: '0.375rem' }}>📋 Pasos del procedimiento</div>
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.375rem' }}>
+                <input
+                  type="text"
+                  value={editSubPasoInput}
+                  onChange={(e) => setEditSubPasoInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && editSubPasoInput.trim()) {
+                      setFormData({ ...formData, subservicios: formData.subservicios.map(s =>
+                        s.id === sub.id ? { ...s, pasos: [...(s.pasos || []), { descripcion: editSubPasoInput.trim() }] } : s
+                      )});
+                      setEditSubPasoInput('');
+                    }
+                  }}
+                  className="form-input"
+                  placeholder="Describe el paso..."
+                  style={{ flex: 1, marginBottom: 0, fontSize: '0.85rem' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!editSubPasoInput.trim()) return;
+                    setFormData({ ...formData, subservicios: formData.subservicios.map(s =>
+                      s.id === sub.id ? { ...s, pasos: [...(s.pasos || []), { descripcion: editSubPasoInput.trim() }] } : s
+                    )});
+                    setEditSubPasoInput('');
+                  }}
+                  style={{ padding: '0.4rem 0.6rem', borderRadius: '0.5rem', border: 'none', background: '#4f46e5', color: 'white', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, flexShrink: 0 }}
+                >+ Paso</button>
+              </div>
+              {(sub.pasos || []).map((paso, pidx) => (
+                <div key={pidx} className="paso-item">
+                  <div className="paso-num">{pidx + 1}</div>
+                  <span className="paso-desc">{paso.descripcion}</span>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, subservicios: formData.subservicios.map(s =>
+                      s.id === sub.id ? { ...s, pasos: (s.pasos || []).filter((_, i) => i !== pidx) } : s
+                    )})}
+                    className="btn-remove-sub"
+                  ><TrashIcon /></button>
+                </div>
+              ))}
+            </div>
             <button
-              onClick={() => setEditingSubId(null)}
+              onClick={() => { setEditingSubId(null); setEditSubPasoInput(''); }}
               style={{ background: '#4f46e5', color: 'white', border: 'none', borderRadius: '0.5rem', padding: '0.4rem 1rem', cursor: 'pointer', width: '100%' }}
             >
               ✅ Listo
@@ -1020,6 +1134,16 @@ const handleSaveService = async () => {
                 <span>⏱️ {sub.suptiempo}</span>
                 <span className="price">💰 ${sub.supvalor}</span>
               </div>
+              {sub.pasos && sub.pasos.length > 0 && (
+                <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #e5e7eb' }}>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#4338CA', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.25rem' }}>📋 {sub.pasos.length} paso{sub.pasos.length > 1 ? 's' : ''}</div>
+                  <ol style={{ paddingLeft: '1.25rem', margin: 0 }}>
+                    {sub.pasos.map((paso, pidx) => (
+                      <li key={pidx} style={{ fontSize: '0.8rem', color: '#4B5563', padding: '1px 0' }}>{paso.descripcion}</li>
+                    ))}
+                  </ol>
+                </div>
+              )}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginLeft: '0.5rem' }}>
               <button
@@ -1044,6 +1168,7 @@ const handleSaveService = async () => {
   </div>
 )}
               </div>
+
             </div>
 
             <div className="modal-footer">
